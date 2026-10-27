@@ -1,0 +1,47 @@
+# Mismo on the server: the app and its own Postgres, reachable only from the
+# server itself (127.0.0.1:3400). The Cloudflare tunnel publishes it.
+name: mismo
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mismo
+      POSTGRES_USER: mismo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mismo -d mismo"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    mem_limit: 512m
+    cpus: 0.5
+
+  app:
+    build: .
+    image: mismo-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://mismo:${POSTGRES_PASSWORD}@db:5432/mismo
+      UPLOAD_DIR: /data/uploads
+      HOME_PROFILE_PATH: /config/home.json
+      BACKUP_STATUS_FILE: /state/last-backup
+    volumes:
+      - uploads:/data/uploads
+      - ./config:/config:ro
+      - ./state:/state:ro
+    ports:
+      - "127.0.0.1:3400:3000"
+    mem_limit: 768m
+    cpus: 1.0
+
+volumes:
+  db-data:
+  uploads:
