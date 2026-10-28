@@ -22,7 +22,7 @@ export const EVENTS: { event: NotificationEvent; label: string }[] = [
   { event: "backup_stale", label: "Nightly backup didn't run (owners)" },
 ];
 
-type Message = { event: NotificationEvent; title: string; body: string; url?: string };
+type Message = { event: NotificationEvent; title: string; body: string; url?: string; replyTo?: string };
 
 /** Everyone in the household (Phase 1 has only owner and family). */
 export async function householdIds(): Promise<string[]> {
@@ -84,6 +84,7 @@ export async function dispatchPending(now = new Date()): Promise<number> {
           subject: n.title,
           text: url ? `${n.body}\n\n${url}` : n.body,
           html: emailHtml(n.title, n.body, url ? { label: "Open Mismo", url } : undefined),
+          replyTo: n.replyTo,
         });
         delivered = true;
       }

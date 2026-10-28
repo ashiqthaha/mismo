@@ -96,7 +96,12 @@ export async function unlinkFinding(findingId: string) {
 
 // ---- Tasks ----
 
-async function notifyAssignee(assigneeId: string | null, me: { id: string; name: string }, projectId: string, title: string) {
+async function notifyAssignee(
+  assigneeId: string | null,
+  me: { id: string; name: string; email: string },
+  projectId: string,
+  title: string,
+) {
   if (!assigneeId || assigneeId === me.id) return;
   const [p] = await db.select({ title: project.title }).from(project).where(eq(project.id, projectId));
   await enqueue([assigneeId], {
@@ -104,6 +109,7 @@ async function notifyAssignee(assigneeId: string | null, me: { id: string; name:
     title: `New task for you: ${title}`,
     body: `${me.name || "Someone"} assigned you a task${p ? ` on "${p.title}"` : ""}.`,
     url: `/projects/${projectId}`,
+    replyTo: me.email,
   });
   kickDispatch();
 }

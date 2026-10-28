@@ -46,6 +46,7 @@ export async function createFinding(formData: FormData): Promise<{ id: string }>
       title: `Safety issue: ${title}`,
       body: `${me.name || "Someone"} logged a safety issue${a ? ` in ${a.name}` : ""}.`,
       url: `/findings/${row.id}`,
+      replyTo: me.email,
     });
     kickDispatch();
   }

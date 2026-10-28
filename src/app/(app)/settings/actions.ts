@@ -53,6 +53,7 @@ export async function invitePerson(formData: FormData) {
       `${me.name || "Someone"} invited you to Mismo, where we keep track of repairs, projects and upkeep for the house. Sign in with this email address.`,
       { label: "Open Mismo", url },
     ),
+    replyTo: me.email,
   });
   refresh();
 }

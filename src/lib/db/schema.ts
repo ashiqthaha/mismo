@@ -341,6 +341,8 @@ export const notification = pgTable(
     title: text("title").notNull(),
     body: text("body").notNull(),
     url: text("url"),
+    /** Who a reply to the email should go to: the person whose action caused it. */
+    replyTo: text("reply_to"),
     status: text("status").$type<"pending" | "sent" | "failed" | "skipped">().notNull().default("pending"),
     sendAfter: timestamp("send_after", { withTimezone: true }).notNull().defaultNow(),
     sentAt: timestamp("sent_at", { withTimezone: true }),

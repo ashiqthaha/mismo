@@ -19,7 +19,8 @@ Fill in `.env`:
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
 | `OWNER_EMAIL` | The owner's sign-in email |
 | `POSTGRES_PASSWORD` | `openssl rand -hex 24` |
-| `RESEND_API_KEY`, `EMAIL_FROM` | From Resend, after verifying the sending domain |
+| `RESEND_API_KEY`, `EMAIL_FROM` | From Resend, after verifying the sending domain (e.g. a `mismo.` subdomain) |
+| `EMAIL_REPLY_TO` | A real inbox for replies to reminders. Emails a person triggers reply to that person |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `docker run --rm node:24-slim npx -y web-push generate-vapid-keys` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` |
 

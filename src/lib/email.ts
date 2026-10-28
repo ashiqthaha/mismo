@@ -2,19 +2,38 @@ import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM || "Mismo <mismo@localhost>";
+// Mail comes from a no-reply address; replies go to a real inbox instead.
+const defaultReplyTo = process.env.EMAIL_REPLY_TO || undefined;
 const client = apiKey ? new Resend(apiKey) : null;
 
 export function emailEnabled(): boolean {
   return client !== null;
 }
 
-/** Sends an email through Resend. Without an API key (local development) it prints the email instead. */
-export async function sendEmail(msg: { to: string; subject: string; text: string; html?: string }): Promise<void> {
+/**
+ * Sends an email through Resend. Without an API key (local development) it prints the email instead.
+ * `replyTo` is the person whose action caused the email; otherwise replies go to EMAIL_REPLY_TO.
+ */
+export async function sendEmail(msg: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  replyTo?: string | null;
+}): Promise<void> {
+  const replyTo = msg.replyTo || defaultReplyTo;
   if (!client) {
-    console.log(`\n[email] to: ${msg.to}\n[email] subject: ${msg.subject}\n${msg.text}\n`);
+    console.log(`\n[email] to: ${msg.to}\n[email] reply-to: ${replyTo ?? "(none)"}\n[email] subject: ${msg.subject}\n${msg.text}\n`);
     return;
   }
-  const { error } = await client.emails.send({ from, ...msg });
+  const { error } = await client.emails.send({
+    from,
+    to: msg.to,
+    subject: msg.subject,
+    text: msg.text,
+    html: msg.html,
+    ...(replyTo ? { replyTo } : {}),
+  });
   if (error) throw new Error(`Resend: ${error.message}`);
 }
 
