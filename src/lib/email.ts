@@ -44,12 +44,12 @@ function escapeHtml(s: string): string {
 /** A plain, readable email body with one button. */
 export function emailHtml(title: string, body: string, button?: { label: string; url: string }): string {
   const action = button
-    ? `<p style="margin:24px 0"><a href="${escapeHtml(button.url)}" style="background:#0f766e;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">${escapeHtml(button.label)}</a></p>`
+    ? `<p style="margin:24px 0"><a href="${escapeHtml(button.url)}" style="background:#0b6e4f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">${escapeHtml(button.label)}</a></p>`
     : "";
-  return `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1c1917">
+  return `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2a24">
 <h2 style="margin:0 0 12px;font-size:20px">${escapeHtml(title)}</h2>
 <p style="margin:0;font-size:15px;line-height:1.5">${escapeHtml(body)}</p>
 ${action}
-<p style="margin-top:32px;font-size:12px;color:#78716c">Mismo · your home's upkeep and projects</p>
+<p style="margin-top:32px;font-size:12px;color:#716d61">Mismo · your home's upkeep and projects</p>
 </div>`;
 }

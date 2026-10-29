@@ -40,7 +40,7 @@ async function ProjectsPage() {
 
       <Card>
         <details>
-          <summary className="cursor-pointer font-medium text-teal-700">New project</summary>
+          <summary className="cursor-pointer font-medium text-brand-700">New project</summary>
           <form action={createProject} className="mt-3 grid gap-3 sm:grid-cols-4">
             <div className="sm:col-span-2"><Field label="Name"><input name="title" required placeholder="e.g. Replace basement carpet" className={input} /></Field></div>
             <Field label="Budget ($)"><input name="budget" inputMode="decimal" placeholder="Optional" className={input} /></Field>
@@ -53,7 +53,7 @@ async function ProjectsPage() {
             </Field>
             <div><SubmitButton className={btnPrimary}>Create</SubmitButton></div>
           </form>
-          <p className="mt-2 text-xs text-stone-500">Tip: you can also select findings on the Findings page and turn them into a project.</p>
+          <p className="mt-2 text-xs text-sand-500">Tip: you can also select findings on the Findings page and turn them into a project.</p>
         </details>
       </Card>
 
@@ -65,9 +65,9 @@ async function ProjectsPage() {
             const list = projects.filter((p) => p.status === status);
             return (
               <section key={status} className="w-72 shrink-0 snap-start">
-                <h2 className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-stone-700">
+                <h2 className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-sand-700">
                   {PROJECT_STATUS[status]}
-                  <span className="text-xs font-normal text-stone-500">{list.length}</span>
+                  <span className="text-xs font-normal text-sand-500">{list.length}</span>
                 </h2>
                 <div className="space-y-2">
                   {list.map((p) => {
@@ -75,28 +75,28 @@ async function ProjectsPage() {
                     const bar = budgetBar(s, p.budgetCents);
                     const t = tasks.get(p.id);
                     return (
-                      <Link key={p.id} href={`/projects/${p.id}`} className="block rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200 hover:ring-teal-400">
-                        <p className="font-medium text-stone-900">{p.title}</p>
-                        <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs text-stone-500">
-                          {p.priority === "high" ? <Badge tone="bg-red-50 text-red-800 ring-red-200">{PRIORITY.high} priority</Badge> : null}
+                      <Link key={p.id} href={`/projects/${p.id}`} className="block rounded-xl bg-white p-3 shadow-sm ring-1 ring-sand-200 hover:ring-brand-400">
+                        <p className="font-medium text-sand-900">{p.title}</p>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs text-sand-500">
+                          {p.priority === "high" ? <Badge tone="bg-sindoor-50 text-sindoor-800 ring-sindoor-200">{PRIORITY.high} priority</Badge> : null}
                           <span>{DOER[p.doer]}</span>
                           {t ? <span>· {t.done}/{t.total} tasks</span> : null}
                           {p.targetEnd ? <span>· by {shortDate(p.targetEnd, today)}</span> : null}
                         </div>
                         {p.budgetCents ? (
                           <div className="mt-2">
-                            <div className="h-1.5 overflow-hidden rounded-full bg-stone-100">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-sand-100">
                               <div className={`h-full ${bar.tone}`} style={{ width: `${bar.pct}%` }} />
                             </div>
-                            <p className="mt-1 text-xs text-stone-500">{money(s)} of {money(p.budgetCents)}</p>
+                            <p className="mt-1 text-xs text-sand-500">{money(s)} of {money(p.budgetCents)}</p>
                           </div>
                         ) : s ? (
-                          <p className="mt-2 text-xs text-stone-500">{money(s)} spent</p>
+                          <p className="mt-2 text-xs text-sand-500">{money(s)} spent</p>
                         ) : null}
                       </Link>
                     );
                   })}
-                  {list.length === 0 ? <p className="rounded-xl border border-dashed border-stone-300 p-3 text-center text-xs text-stone-400">None</p> : null}
+                  {list.length === 0 ? <p className="rounded-xl border border-dashed border-sand-300 p-3 text-center text-xs text-sand-400">None</p> : null}
                 </div>
               </section>
             );
@@ -107,13 +107,13 @@ async function ProjectsPage() {
       {done.length > 0 ? (
         <Card>
           <details>
-            <summary className="cursor-pointer font-medium text-stone-700">Done ({done.length})</summary>
-            <ul className="mt-2 divide-y divide-stone-100 text-sm">
+            <summary className="cursor-pointer font-medium text-sand-700">Done ({done.length})</summary>
+            <ul className="mt-2 divide-y divide-sand-100 text-sm">
               {done.map((p) => (
                 <li key={p.id}>
-                  <Link href={`/projects/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-stone-50">
+                  <Link href={`/projects/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-sand-50">
                     <span>{p.title}</span>
-                    <span className="text-xs text-stone-500">{money(spent.get(p.id) ?? 0)}</span>
+                    <span className="text-xs text-sand-500">{money(spent.get(p.id) ?? 0)}</span>
                   </Link>
                 </li>
               ))}

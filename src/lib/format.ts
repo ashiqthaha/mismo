@@ -36,9 +36,9 @@ export function dateStr(input: FormDataEntryValue | null): string | null {
 }
 
 export const SEVERITY: Record<Severity, { label: string; tone: string }> = {
-  safety: { label: "Safety", tone: "bg-red-100 text-red-800 ring-red-200" },
-  fix: { label: "Needs fixing", tone: "bg-amber-100 text-amber-900 ring-amber-200" },
-  nice: { label: "Nice to have", tone: "bg-sky-100 text-sky-900 ring-sky-200" },
+  safety: { label: "Safety", tone: "bg-sindoor-100 text-sindoor-800 ring-sindoor-200" },
+  fix: { label: "Needs fixing", tone: "bg-saffron-100 text-saffron-900 ring-saffron-200" },
+  nice: { label: "Nice to have", tone: "bg-peacock-100 text-peacock-900 ring-peacock-200" },
 };
 
 export const FINDING_STATUS: Record<FindingStatus, string> = {

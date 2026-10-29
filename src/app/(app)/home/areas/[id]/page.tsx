@@ -51,8 +51,8 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
       />
 
       {a.present !== "yes" ? (
-        <Card className="bg-amber-50/60 ring-amber-200">
-          <p className="text-sm text-stone-700">
+        <Card className="bg-saffron-50/60 ring-saffron-200">
+          <p className="text-sm text-sand-700">
             {a.present === "unknown" ? "Is this part of the house?" : "Marked as not in the house."} Its maintenance jobs stay paused until it&apos;s confirmed.
           </p>
           <div className="mt-3 flex gap-2">
@@ -69,11 +69,11 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
         {findings.length === 0 ? (
           <EmptyState title="Nothing logged here yet" body="Walk this area and note anything that needs fixing or that you'd like to change." />
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-sand-100">
             {findings.map((f) => (
               <li key={f.id}>
-                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-stone-50">
-                  <span className="min-w-0 truncate text-stone-800">{f.title}</span>
+                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-sand-50">
+                  <span className="min-w-0 truncate text-sand-800">{f.title}</span>
                   <span className="flex shrink-0 gap-1.5">
                     <SeverityBadge severity={f.severity} />
                     <FindingStatusBadge status={f.status} />
@@ -89,14 +89,14 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
         <Card>
           <CardTitle>Systems here</CardTitle>
           {systems.length === 0 ? (
-            <p className="text-sm text-stone-500">None.</p>
+            <p className="text-sm text-sand-500">None.</p>
           ) : (
-            <ul className="divide-y divide-stone-100 text-sm">
+            <ul className="divide-y divide-sand-100 text-sm">
               {systems.map((s) => {
                 const age = systemAge(s.installYear, s.expectedLifeYears, year);
                 return (
                   <li key={s.id}>
-                    <Link href={`/home/systems/${s.id}`} className="flex justify-between gap-2 py-2 hover:bg-stone-50">
+                    <Link href={`/home/systems/${s.id}`} className="flex justify-between gap-2 py-2 hover:bg-sand-50">
                       <span>{s.name}</span>
                       <span className={`text-xs ${age.tone}`}>{age.label}</span>
                     </Link>
@@ -109,14 +109,14 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
         <Card>
           <CardTitle>Upkeep</CardTitle>
           {plans.length === 0 ? (
-            <p className="text-sm text-stone-500">No recurring jobs.</p>
+            <p className="text-sm text-sand-500">No recurring jobs.</p>
           ) : (
-            <ul className="divide-y divide-stone-100 text-sm">
+            <ul className="divide-y divide-sand-100 text-sm">
               {plans.map((p) => (
                 <li key={p.id}>
-                  <Link href={`/maintenance/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-stone-50">
+                  <Link href={`/maintenance/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-sand-50">
                     <span>{p.title}</span>
-                    <span className="shrink-0 text-xs text-stone-500">{p.nextDue ? `${shortDate(p.nextDue, today)} · ${relativeDay(p.nextDue, today)}` : "Not scheduled"}</span>
+                    <span className="shrink-0 text-xs text-sand-500">{p.nextDue ? `${shortDate(p.nextDue, today)} · ${relativeDay(p.nextDue, today)}` : "Not scheduled"}</span>
                   </Link>
                 </li>
               ))}
@@ -130,7 +130,7 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
 
       <Card>
         <details>
-          <summary className="cursor-pointer text-sm font-medium text-teal-700">Edit or remove this area</summary>
+          <summary className="cursor-pointer text-sm font-medium text-brand-700">Edit or remove this area</summary>
           <form action={updateArea.bind(null, a.id)} className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="Name"><input name="name" required defaultValue={a.name} className={input} /></Field>
             <Field label="Level" hint="e.g. Main, Upper, Basement"><input name="level" defaultValue={a.level ?? ""} className={input} /></Field>
@@ -150,8 +150,8 @@ async function AreaPage({ params }: Pick<PageProps<"/home/areas/[id]">, "params"
             <div className="sm:col-span-2"><Field label="Notes"><textarea name="notes" rows={2} defaultValue={a.notes ?? ""} className={input} /></Field></div>
             <div><SubmitButton>Save</SubmitButton></div>
           </form>
-          <form action={deleteArea.bind(null, a.id)} className="mt-6 border-t border-stone-100 pt-4">
-            <p className="mb-2 text-sm text-stone-600">Removing an area also removes its maintenance jobs and photos. Its findings and systems stay, without an area.</p>
+          <form action={deleteArea.bind(null, a.id)} className="mt-6 border-t border-sand-100 pt-4">
+            <p className="mb-2 text-sm text-sand-600">Removing an area also removes its maintenance jobs and photos. Its findings and systems stay, without an area.</p>
             <SubmitButton className={btnDanger} pendingText="Removing…">Remove area</SubmitButton>
           </form>
         </details>

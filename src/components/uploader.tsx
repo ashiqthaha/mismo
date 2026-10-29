@@ -66,7 +66,7 @@ export function Uploader({
         <input type="file" multiple accept={accept} className="sr-only" onChange={onChange} disabled={busy} />
         {busy ? "Uploading…" : label}
       </label>
-      {error ? <p className="w-full text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="w-full text-sm text-sindoor-700">{error}</p> : null}
     </div>
   );
 }

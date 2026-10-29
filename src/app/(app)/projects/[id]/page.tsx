@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Attachments, LogSection } from "@/components/attachments";
+import { BirdBadge } from "@/components/birds";
 import { PageSkeleton } from "@/components/skeleton";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, CardTitle, Fact, Field, PageHeader, SeverityBadge, btnDanger, btnSecondary, input } from "@/components/ui";
@@ -66,14 +67,14 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
 
       <Card>
         <form action={setProjectStatus.bind(null, p.id)} className="mb-4 flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium text-stone-700" htmlFor="status">Status</label>
+          <label className="text-sm font-medium text-sand-700" htmlFor="status">Status</label>
           <select id="status" name="status" defaultValue={p.status} className={`${input} w-auto`}>
             {PROJECT_STATUS_ORDER.map((s) => (
               <option key={s} value={s}>{PROJECT_STATUS[s]}</option>
             ))}
           </select>
           <SubmitButton className={btnSecondary}>Update</SubmitButton>
-          {p.status !== "done" ? <span className="text-xs text-stone-500">Marking it Done closes its findings as fixed.</span> : null}
+          {p.status !== "done" ? <span className="text-xs text-sand-500">Marking it Done closes its findings as fixed.</span> : null}
         </form>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
           <Fact label="Priority">{PRIORITY[p.priority]}</Fact>
@@ -83,35 +84,35 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
         </dl>
         <div className="mt-4">
           <div className="flex items-baseline justify-between text-sm">
-            <span className="font-medium text-stone-800">{money(spent)} spent</span>
-            <span className="text-stone-500">{p.budgetCents ? `of ${money(p.budgetCents)} budget` : "No budget set"}</span>
+            <span className="font-medium text-sand-800">{money(spent)} spent</span>
+            <span className="text-sand-500">{p.budgetCents ? `of ${money(p.budgetCents)} budget` : "No budget set"}</span>
           </div>
           {p.budgetCents ? (
-            <div className="mt-1 h-2 overflow-hidden rounded-full bg-stone-100">
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-sand-100">
               <div className={`h-full ${bar.tone}`} style={{ width: `${bar.pct}%` }} />
             </div>
           ) : null}
         </div>
-        {p.description ? <p className="mt-3 whitespace-pre-wrap text-sm text-stone-700">{p.description}</p> : null}
+        {p.description ? <p className="mt-3 whitespace-pre-wrap text-sm text-sand-700">{p.description}</p> : null}
       </Card>
 
       <Card>
-        <CardTitle action={<Link href="/findings" className="text-sm text-teal-700 hover:underline">Add from findings</Link>}>Findings covered</CardTitle>
+        <CardTitle action={<Link href="/findings" className="text-sm text-brand-700 hover:underline">Add from findings</Link>}>Findings covered</CardTitle>
         {findings.length === 0 ? (
-          <p className="text-sm text-stone-500">None linked.</p>
+          <p className="text-sm text-sand-500">None linked.</p>
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-sand-100">
             {findings.map(({ f, areaName }) => (
               <li key={f.id} className="flex items-center justify-between gap-2 py-2">
                 <Link href={`/findings/${f.id}`} className="min-w-0 hover:underline">
-                  <span className="text-stone-800">{f.title}</span>
-                  {areaName ? <span className="ml-2 text-xs text-stone-500">{areaName}</span> : null}
+                  <span className="text-sand-800">{f.title}</span>
+                  {areaName ? <span className="ml-2 text-xs text-sand-500">{areaName}</span> : null}
                 </Link>
                 <span className="flex shrink-0 items-center gap-2">
                   <SeverityBadge severity={f.severity} />
                   {f.status === "in_project" ? (
                     <form action={unlinkFinding.bind(null, f.id)}>
-                      <button type="submit" className="text-xs text-stone-500 hover:text-red-700" aria-label="Remove from project">Remove</button>
+                      <button type="submit" className="text-xs text-sand-500 hover:text-sindoor-700" aria-label="Remove from project">Remove</button>
                     </form>
                   ) : null}
                 </span>
@@ -123,7 +124,7 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
 
       <Card>
         <CardTitle>Tasks</CardTitle>
-        <ul className="mb-3 divide-y divide-stone-100">
+        <ul className="mb-3 divide-y divide-sand-100">
           {tasks.map((t) => {
             const who = person(t.assigneeId);
             const late = !t.done && t.dueDate && t.dueDate < today;
@@ -133,20 +134,21 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
                   <form action={toggleTask.bind(null, t.id)}>
                     <button
                       type="submit"
-                      className={`mt-0.5 grid h-5 w-5 place-items-center rounded border text-xs ${t.done ? "border-teal-600 bg-teal-600 text-white" : "border-stone-400 bg-white"}`}
+                      className={`mt-0.5 grid h-5 w-5 place-items-center rounded border text-xs ${t.done ? "border-brand-600 bg-brand-600 text-white" : "border-sand-400 bg-white"}`}
                       aria-label={t.done ? "Mark not done" : "Mark done"}
                     >
                       {t.done ? "✓" : ""}
                     </button>
                   </form>
                   <div className="min-w-0 flex-1">
-                    <p className={t.done ? "text-stone-400 line-through" : "text-stone-900"}>{t.title}</p>
-                    <p className="text-xs text-stone-500">
+                    <p className={t.done ? "text-sand-400 line-through" : "text-sand-900"}>{t.title}</p>
+                    <p className="flex flex-wrap items-center gap-x-1 text-xs text-sand-500">
+                      {who ? <BirdBadge bird={who.bird} name={displayName(who)} /> : null}
                       {who ? displayName(who) : "Unassigned"}
-                      {t.dueDate ? <span className={late ? "text-red-700" : ""}> · due {shortDate(t.dueDate, today)} ({relativeDay(t.dueDate, today)})</span> : null}
+                      {t.dueDate ? <span className={late ? "text-sindoor-700" : ""}> · due {shortDate(t.dueDate, today)} ({relativeDay(t.dueDate, today)})</span> : null}
                     </p>
                     <details className="mt-1">
-                      <summary className="cursor-pointer text-xs text-teal-700">Edit</summary>
+                      <summary className="cursor-pointer text-xs text-brand-700">Edit</summary>
                       <form action={updateTask.bind(null, t.id)} className="mt-2 grid gap-2 sm:grid-cols-4">
                         <input name="title" required defaultValue={t.title} className={`${input} sm:col-span-2`} />
                         <select name="assigneeId" defaultValue={t.assigneeId ?? ""} className={input}>
@@ -158,7 +160,7 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
                         <input name="dueDate" type="date" defaultValue={t.dueDate ?? ""} className={input} />
                         <div className="flex gap-2 sm:col-span-4">
                           <SubmitButton className={btnSecondary}>Save</SubmitButton>
-                          <button formAction={deleteTask.bind(null, t.id)} className="text-sm text-red-700 hover:underline">Delete</button>
+                          <button formAction={deleteTask.bind(null, t.id)} className="text-sm text-sindoor-700 hover:underline">Delete</button>
                         </div>
                       </form>
                     </details>
@@ -184,27 +186,31 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
       <Card>
         <CardTitle>Spending</CardTitle>
         {expenses.length === 0 ? (
-          <p className="mb-3 text-sm text-stone-500">Nothing spent yet.</p>
+          <p className="mb-3 text-sm text-sand-500">Nothing spent yet.</p>
         ) : (
-          <ul className="mb-3 divide-y divide-stone-100 text-sm">
-            {expenses.map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-2 py-2">
-                <span className="min-w-0">
-                  <span className="text-stone-900">{e.vendor || e.category || "Expense"}</span>
-                  <span className="ml-2 text-xs text-stone-500">
-                    {shortDate(e.spentOn, today)}
-                    {e.category && e.vendor ? ` · ${e.category}` : ""}
-                    {e.note ? ` · ${e.note}` : ""}
+          <ul className="mb-3 divide-y divide-sand-100 text-sm">
+            {expenses.map((e) => {
+              const by = person(e.createdBy);
+              return (
+                <li key={e.id} className="flex items-center justify-between gap-2 py-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    {by ? <BirdBadge bird={by.bird} name={displayName(by)} /> : null}
+                    <span className="text-sand-900">{e.vendor || e.category || "Expense"}</span>
+                    <span className="text-xs text-sand-500">
+                      {shortDate(e.spentOn, today)}
+                      {e.category && e.vendor ? ` · ${e.category}` : ""}
+                      {e.note ? ` · ${e.note}` : ""}
+                    </span>
                   </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-3">
-                  <span className="font-medium">{money(e.amountCents)}</span>
-                  <form action={deleteExpense.bind(null, e.id)}>
-                    <button type="submit" className="text-xs text-stone-400 hover:text-red-700" aria-label="Delete expense">✕</button>
-                  </form>
-                </span>
-              </li>
-            ))}
+                  <span className="flex shrink-0 items-center gap-3">
+                    <span className="font-medium">{money(e.amountCents)}</span>
+                    <form action={deleteExpense.bind(null, e.id)}>
+                      <button type="submit" className="text-xs text-sand-400 hover:text-sindoor-700" aria-label="Delete expense">✕</button>
+                    </form>
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
         <form action={addExpense.bind(null, p.id)} className="grid gap-2 sm:grid-cols-5">
@@ -215,7 +221,7 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
           <SubmitButton className={btnSecondary}>Add</SubmitButton>
           <input name="note" placeholder="Note (optional)" className={`${input} sm:col-span-5`} />
         </form>
-        <p className="mt-2 text-xs text-stone-500">Snap receipts into the photos below.</p>
+        <p className="mt-2 text-xs text-sand-500">Snap receipts into the photos below.</p>
       </Card>
 
       <Attachments ownerType="project" ownerId={p.id} title="Photos and documents" phases />
@@ -223,7 +229,7 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
 
       <Card>
         <details>
-          <summary className="cursor-pointer text-sm font-medium text-teal-700">Edit or delete project</summary>
+          <summary className="cursor-pointer text-sm font-medium text-brand-700">Edit or delete project</summary>
           <form action={updateProject.bind(null, p.id)} className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2"><Field label="Name"><input name="title" required defaultValue={p.title} className={input} /></Field></div>
             <Field label="Priority">
@@ -246,8 +252,8 @@ async function ProjectPage({ params }: Pick<PageProps<"/projects/[id]">, "params
             <div className="sm:col-span-2"><Field label="Description"><textarea name="description" rows={3} defaultValue={p.description ?? ""} className={input} /></Field></div>
             <div><SubmitButton>Save</SubmitButton></div>
           </form>
-          <form action={deleteProject.bind(null, p.id)} className="mt-6 border-t border-stone-100 pt-4">
-            <p className="mb-2 text-sm text-stone-600">Deleting removes its tasks, spending and files. Its findings go back to the open list.</p>
+          <form action={deleteProject.bind(null, p.id)} className="mt-6 border-t border-sand-100 pt-4">
+            <p className="mb-2 text-sm text-sand-600">Deleting removes its tasks, spending and files. Its findings go back to the open list.</p>
             <SubmitButton className={btnDanger} pendingText="Deleting…">Delete project</SubmitButton>
           </form>
         </details>

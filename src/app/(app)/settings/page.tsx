@@ -1,6 +1,7 @@
 import { asc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { BIRDS, BirdBadge, BirdPicture } from "@/components/birds";
 import { PushToggle } from "@/components/push-toggle";
 import { SignOutButton } from "@/components/sign-out";
 import { PageSkeleton } from "@/components/skeleton";
@@ -13,7 +14,7 @@ import { EVENTS } from "@/lib/notify";
 import { displayName } from "@/lib/people";
 import { vapidPublicKey } from "@/lib/push";
 import { requireUser } from "@/lib/session";
-import { invitePerson, removePerson, revokeInvite, savePrefs, updateMyName } from "./actions";
+import { invitePerson, removePerson, revokeInvite, savePrefs, updateMyBird, updateMyName } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -33,6 +34,8 @@ async function SettingsPage() {
     db.select().from(invite).where(isNull(invite.acceptedAt)).orderBy(asc(invite.email)),
   ]);
   const pref = (event: string) => prefs.find((p) => p.event === event) ?? { email: true, push: true };
+  // Read from the table, not the session, so a new pick shows straight away.
+  const myBird = people.find((p) => p.id === me.id)?.bird ?? null;
 
   return (
     <div className="space-y-4">
@@ -47,6 +50,29 @@ async function SettingsPage() {
       </Card>
 
       <Card>
+        <CardTitle>Your bird</CardTitle>
+        <p className="mb-3 text-sm text-sand-600">It marks the notes, photos, findings and spending you add, so everyone can see whose they are.</p>
+        <form action={updateMyBird} className="grid grid-cols-2 gap-3 sm:max-w-sm">
+          {(["owl", "cardinal"] as const).map((b) => {
+            const mine = myBird === b;
+            return (
+              <button
+                key={b}
+                type="submit"
+                name="bird"
+                value={b}
+                aria-pressed={mine}
+                className={`flex flex-col items-center gap-1 rounded-xl bg-white p-3 ring-2 transition ${mine ? "ring-brand-600" : "ring-sand-200 hover:ring-sand-300"}`}
+              >
+                <BirdPicture bird={b} className="h-16 w-16" />
+                <span className={`text-sm font-medium ${mine ? "text-brand-800" : "text-sand-700"}`}>{BIRDS[b]}{mine ? " ✓" : ""}</span>
+              </button>
+            );
+          })}
+        </form>
+      </Card>
+
+      <Card>
         <CardTitle>Alerts on this phone or computer</CardTitle>
         <PushToggle publicKey={vapidPublicKey()} />
       </Card>
@@ -54,50 +80,51 @@ async function SettingsPage() {
       <Card>
         <CardTitle>What to tell you about</CardTitle>
         {!emailEnabled() ? (
-          <p className="mb-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">Email isn&apos;t set up on this server yet, so emails are only written to the server log.</p>
+          <p className="mb-3 rounded-lg bg-saffron-50 p-2 text-xs text-saffron-900">Email isn&apos;t set up on this server yet, so emails are only written to the server log.</p>
         ) : null}
         <form action={savePrefs}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-stone-500">
+              <tr className="text-left text-xs uppercase tracking-wide text-sand-500">
                 <th className="pb-2 font-medium">Event</th>
                 <th className="w-16 pb-2 text-center font-medium">Email</th>
                 <th className="w-16 pb-2 text-center font-medium">Phone</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-sand-100">
               {EVENTS.map(({ event, label }) => (
                 <tr key={event}>
-                  <td className="py-2 pr-2 text-stone-800">{label}</td>
+                  <td className="py-2 pr-2 text-sand-800">{label}</td>
                   <td className="text-center">
-                    <input type="checkbox" name={`${event}:email`} defaultChecked={pref(event).email} className="h-4 w-4 accent-teal-700" aria-label={`Email: ${label}`} />
+                    <input type="checkbox" name={`${event}:email`} defaultChecked={pref(event).email} className="h-4 w-4 accent-brand-700" aria-label={`Email: ${label}`} />
                   </td>
                   <td className="text-center">
-                    <input type="checkbox" name={`${event}:push`} defaultChecked={pref(event).push} className="h-4 w-4 accent-teal-700" aria-label={`Phone: ${label}`} />
+                    <input type="checkbox" name={`${event}:push`} defaultChecked={pref(event).push} className="h-4 w-4 accent-brand-700" aria-label={`Phone: ${label}`} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-xs text-stone-500">Nothing is sent between 9 p.m. and 7 a.m. Eastern; it waits until morning.</p>
+          <p className="mt-3 text-xs text-sand-500">Nothing is sent between 9 p.m. and 7 a.m. Eastern; it waits until morning.</p>
           <div className="mt-3"><SubmitButton className={btnSecondary}>Save choices</SubmitButton></div>
         </form>
       </Card>
 
       <Card>
         <CardTitle>People</CardTitle>
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-sand-100">
           {people.map((p) => (
             <li key={p.id} className="flex items-center justify-between gap-2 py-2">
-              <span className="min-w-0">
-                <span className="text-stone-900">{displayName(p)}</span>
-                <span className="ml-2 text-xs text-stone-500">{p.email}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <BirdBadge bird={p.bird} name={displayName(p)} />
+                <span className="text-sand-900">{displayName(p)}</span>
+                <span className="ml-2 text-xs text-sand-500">{p.email}</span>
               </span>
               <span className="flex shrink-0 items-center gap-2">
                 <Badge>{p.role === "owner" ? "Owner" : "Family"}</Badge>
                 {me.role === "owner" && p.id !== me.id ? (
                   <form action={removePerson.bind(null, p.id)}>
-                    <button type="submit" className="text-xs text-red-700 hover:underline">Remove</button>
+                    <button type="submit" className="text-xs text-sindoor-700 hover:underline">Remove</button>
                   </form>
                 ) : null}
               </span>
@@ -105,12 +132,12 @@ async function SettingsPage() {
           ))}
           {invites.map((i) => (
             <li key={i.id} className="flex items-center justify-between gap-2 py-2">
-              <span className="text-stone-600">{i.email}</span>
+              <span className="text-sand-600">{i.email}</span>
               <span className="flex shrink-0 items-center gap-2">
-                <Badge tone="bg-amber-50 text-amber-900 ring-amber-200">Invited</Badge>
+                <Badge tone="bg-saffron-50 text-saffron-900 ring-saffron-200">Invited</Badge>
                 {me.role === "owner" ? (
                   <form action={revokeInvite.bind(null, i.id)}>
-                    <button type="submit" className="text-xs text-red-700 hover:underline">Cancel</button>
+                    <button type="submit" className="text-xs text-sindoor-700 hover:underline">Cancel</button>
                   </form>
                 ) : null}
               </span>
@@ -129,7 +156,7 @@ async function SettingsPage() {
             <div className="self-end"><SubmitButton className={btnSecondary} pendingText="Sending…">Send invite</SubmitButton></div>
           </form>
         ) : null}
-        <p className="mt-3 text-xs text-stone-500">Family members can do everything except invite or remove people.</p>
+        <p className="mt-3 text-xs text-sand-500">Family members can do everything except invite or remove people.</p>
       </Card>
     </div>
   );

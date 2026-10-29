@@ -8,9 +8,9 @@ import { btnPrimary, btnSecondary, input } from "./ui";
 import { uploadFiles } from "./uploader";
 
 const CHOICES: { value: Severity; label: string; on: string }[] = [
-  { value: "safety", label: "Safety", on: "bg-red-600 text-white ring-red-600" },
-  { value: "fix", label: "Needs fixing", on: "bg-amber-500 text-white ring-amber-500" },
-  { value: "nice", label: "Nice to have", on: "bg-sky-600 text-white ring-sky-600" },
+  { value: "safety", label: "Safety", on: "bg-sindoor-600 text-white ring-sindoor-600" },
+  { value: "fix", label: "Needs fixing", on: "bg-saffron-500 text-white ring-saffron-500" },
+  { value: "nice", label: "Nice to have", on: "bg-peacock-600 text-white ring-peacock-600" },
 ];
 
 /** Quick capture during a walkthrough: a title, a severity, a note and photos. */
@@ -55,7 +55,7 @@ export function FindingCapture({ areaId, systems }: { areaId: string; systems: {
             role="radio"
             aria-checked={severity === c.value}
             onClick={() => setSeverity(c.value)}
-            className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 ${severity === c.value ? c.on : "bg-white text-stone-700 ring-stone-300"}`}
+            className={`rounded-lg px-2 py-2.5 text-sm font-medium ring-1 ${severity === c.value ? c.on : "bg-white text-sand-700 ring-sand-300"}`}
           >
             {c.label}
           </button>
@@ -82,7 +82,7 @@ export function FindingCapture({ areaId, systems }: { areaId: string; systems: {
           {photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"} · add more` : "Add photos"}
         </label>
         {photos.length ? (
-          <button type="button" className="text-sm text-stone-500 underline" onClick={() => setPhotos([])}>
+          <button type="button" className="text-sm text-sand-500 underline" onClick={() => setPhotos([])}>
             Clear photos
           </button>
         ) : null}
@@ -90,7 +90,7 @@ export function FindingCapture({ areaId, systems }: { areaId: string; systems: {
           {busy ? (photos.length ? "Saving photos…" : "Saving…") : "Save finding"}
         </button>
       </div>
-      {message ? <p className={`text-sm ${message.ok ? "text-teal-800" : "text-red-700"}`}>{message.text}</p> : null}
+      {message ? <p className={`text-sm ${message.ok ? "text-brand-800" : "text-sindoor-700"}`}>{message.text}</p> : null}
     </form>
   );
 }

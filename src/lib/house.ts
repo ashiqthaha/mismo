@@ -38,11 +38,11 @@ export type AgeInfo = { label: string; tone: string; pct: number | null };
 
 /** How far through its expected life a system is, e.g. "12 of 12 yrs". */
 export function systemAge(installYear: number | null, expectedLife: number | null, currentYear: number): AgeInfo {
-  if (!installYear) return { label: "Age unknown", tone: "text-stone-400", pct: null };
+  if (!installYear) return { label: "Age unknown", tone: "text-sand-400", pct: null };
   const age = Math.max(0, currentYear - installYear);
-  if (!expectedLife) return { label: `${age} yrs old`, tone: "text-stone-600", pct: null };
+  if (!expectedLife) return { label: `${age} yrs old`, tone: "text-sand-600", pct: null };
   const pct = age / expectedLife;
-  const tone = pct >= 1 ? "text-red-700" : pct >= 0.8 ? "text-amber-700" : "text-stone-600";
+  const tone = pct >= 1 ? "text-sindoor-700" : pct >= 0.8 ? "text-saffron-700" : "text-sand-600";
   return { label: `${age} of ${expectedLife} yrs`, tone, pct };
 }
 

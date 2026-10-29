@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
-import { invite, notificationPref, user, type Role } from "@/lib/db/schema";
+import { invite, notificationPref, user, type Bird, type Role } from "@/lib/db/schema";
 import { emailHtml, sendEmail } from "@/lib/email";
 import { str } from "@/lib/format";
 import { EVENTS } from "@/lib/notify";
@@ -16,6 +16,15 @@ export async function updateMyName(formData: FormData) {
   if (!name) return;
   await db.update(user).set({ name, updatedAt: new Date() }).where(eq(user.id, me.id));
   await audit(me.id, "update", "user", me.id, { name });
+  refresh();
+}
+
+export async function updateMyBird(formData: FormData) {
+  const me = await requireUser();
+  const value = formData.get("bird");
+  const bird: Bird | null = value === "owl" || value === "cardinal" ? value : null;
+  await db.update(user).set({ bird, updatedAt: new Date() }).where(eq(user.id, me.id));
+  await audit(me.id, "update", "user", me.id, { bird });
   refresh();
 }
 

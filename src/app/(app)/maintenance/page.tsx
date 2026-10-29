@@ -28,14 +28,14 @@ function PlanItem({ p, today }: { p: PlanRow; today: string }) {
   return (
     <li className="flex items-center gap-3 py-2.5">
       <Link href={`/maintenance/${p.id}`} className="min-w-0 flex-1">
-        <span className="block text-stone-900 hover:underline">{p.title}</span>
-        <span className="mt-0.5 block text-xs text-stone-500">
+        <span className="block text-sand-900 hover:underline">{p.title}</span>
+        <span className="mt-0.5 block text-xs text-sand-500">
           {p.targetName ? `${p.targetName} · ` : ""}
           {intervalLabel(p.intervalMonths)} · {WHO[p.who]}
         </span>
       </Link>
       {p.nextDue ? (
-        <span className={`shrink-0 text-right text-xs ${late ? "font-medium text-red-700" : "text-stone-600"}`}>
+        <span className={`shrink-0 text-right text-xs ${late ? "font-medium text-sindoor-700" : "text-sand-600"}`}>
           {shortDate(p.nextDue, today)}
           <br />
           {relativeDay(p.nextDue, today)}
@@ -76,27 +76,27 @@ async function MaintenancePage() {
       <PageHeader title="Upkeep" subtitle={`${active.length} recurring jobs. Reminders go out 7 days before each is due.`} />
 
       {overdue.length > 0 ? (
-        <Card className="ring-red-200">
+        <Card className="ring-sindoor-200">
           <CardTitle>Overdue ({overdue.length})</CardTitle>
-          <ul className="divide-y divide-stone-100">{overdue.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>
+          <ul className="divide-y divide-sand-100">{overdue.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>
         </Card>
       ) : null}
 
       <Card>
         <CardTitle>Next 30 days ({soon.length})</CardTitle>
-        {soon.length === 0 ? <p className="text-sm text-stone-500">Nothing due.</p> : <ul className="divide-y divide-stone-100">{soon.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>}
+        {soon.length === 0 ? <p className="text-sm text-sand-500">Nothing due.</p> : <ul className="divide-y divide-sand-100">{soon.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>}
       </Card>
 
       {unscheduled.length > 0 ? (
         <Card>
           <CardTitle>When were these last done?</CardTitle>
-          <p className="mb-2 text-sm text-stone-600">These repeat every few years. Enter the last time, and the next date follows. A guess is fine.</p>
-          <ul className="divide-y divide-stone-100">
+          <p className="mb-2 text-sm text-sand-600">These repeat every few years. Enter the last time, and the next date follows. A guess is fine.</p>
+          <ul className="divide-y divide-sand-100">
             {unscheduled.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-2 py-2.5">
-                <Link href={`/maintenance/${p.id}`} className="min-w-0 flex-1 text-stone-900 hover:underline">
+                <Link href={`/maintenance/${p.id}`} className="min-w-0 flex-1 text-sand-900 hover:underline">
                   {p.title}
-                  <span className="ml-2 text-xs text-stone-500">{intervalLabel(p.intervalMonths)}</span>
+                  <span className="ml-2 text-xs text-sand-500">{intervalLabel(p.intervalMonths)}</span>
                 </Link>
                 <form action={setLastDone.bind(null, p.id)} className="flex gap-2">
                   <input name="lastDone" type="date" max={today} required className={`${input} w-auto py-1`} aria-label={`Last done: ${p.title}`} />
@@ -114,10 +114,10 @@ async function MaintenancePage() {
           <div className="space-y-4">
             {[...byMonth.entries()].map(([ym, list]) => (
               <div key={ym}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-sand-500">
                   {monthName(Number(ym.slice(5, 7)))} {ym.slice(0, 4)}
                 </h3>
-                <ul className="divide-y divide-stone-100">{list.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>
+                <ul className="divide-y divide-sand-100">{list.map((p) => <PlanItem key={p.id} p={p} today={today} />)}</ul>
               </div>
             ))}
           </div>
@@ -127,16 +127,16 @@ async function MaintenancePage() {
       {paused.length > 0 ? (
         <Card>
           <details>
-            <summary className="cursor-pointer font-medium text-stone-700">Paused ({paused.length})</summary>
-            <p className="mt-2 text-sm text-stone-600">No reminders for these: either they&apos;re turned off, or their equipment or area isn&apos;t confirmed in the house yet.</p>
-            <ul className="mt-2 divide-y divide-stone-100 text-sm">
+            <summary className="cursor-pointer font-medium text-sand-700">Paused ({paused.length})</summary>
+            <p className="mt-2 text-sm text-sand-600">No reminders for these: either they&apos;re turned off, or their equipment or area isn&apos;t confirmed in the house yet.</p>
+            <ul className="mt-2 divide-y divide-sand-100 text-sm">
               {paused.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                   <Link href={`/maintenance/${p.id}`} className="hover:underline">{p.title}</Link>
                   {!p.enabled ? (
                     <Badge>Turned off</Badge>
                   ) : p.targetHref ? (
-                    <Link href={p.targetHref} className="text-xs text-teal-700 hover:underline">{p.targetName}: {PRESENCE[p.targetPresent].toLowerCase()}</Link>
+                    <Link href={p.targetHref} className="text-xs text-brand-700 hover:underline">{p.targetName}: {PRESENCE[p.targetPresent].toLowerCase()}</Link>
                   ) : null}
                 </li>
               ))}
@@ -147,7 +147,7 @@ async function MaintenancePage() {
 
       <Card>
         <details>
-          <summary className="cursor-pointer font-medium text-teal-700">Add a recurring job</summary>
+          <summary className="cursor-pointer font-medium text-brand-700">Add a recurring job</summary>
           <form action={createPlan} className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2"><Field label="Job"><input name="title" required placeholder="e.g. Clean dehumidifier filter" className={input} /></Field></div>
             <Field label="For">
@@ -174,11 +174,11 @@ async function MaintenancePage() {
               </select>
             </Field>
             <fieldset className="sm:col-span-2">
-              <legend className="mb-1 text-sm font-medium text-stone-700">Best months (optional)</legend>
+              <legend className="mb-1 text-sm font-medium text-sand-700">Best months (optional)</legend>
               <div className="flex flex-wrap gap-1.5">
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <label key={m} className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm ring-1 ring-stone-300">
-                    <input type="checkbox" name="bestMonths" value={m} className="accent-teal-700" /> {monthName(m)}
+                  <label key={m} className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm ring-1 ring-sand-300">
+                    <input type="checkbox" name="bestMonths" value={m} className="accent-brand-700" /> {monthName(m)}
                   </label>
                 ))}
               </div>

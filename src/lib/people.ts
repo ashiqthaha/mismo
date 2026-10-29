@@ -1,12 +1,12 @@
 import { asc } from "drizzle-orm";
 import { db } from "./db";
-import { user } from "./db/schema";
+import { user, type Bird } from "./db/schema";
 
-export type Person = { id: string; name: string; email: string; role: string };
+export type Person = { id: string; name: string; email: string; role: string; bird: Bird | null };
 
 export async function listPeople(): Promise<Person[]> {
   return db
-    .select({ id: user.id, name: user.name, email: user.email, role: user.role })
+    .select({ id: user.id, name: user.name, email: user.email, role: user.role, bird: user.bird })
     .from(user)
     .orderBy(asc(user.name));
 }

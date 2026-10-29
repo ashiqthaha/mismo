@@ -82,10 +82,10 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
     }
   }
 
-  if (state === "loading") return <p className="text-sm text-stone-500">Checking this device…</p>;
+  if (state === "loading") return <p className="text-sm text-sand-500">Checking this device…</p>;
   if (state === "unsupported") {
     return (
-      <p className="text-sm text-stone-600">
+      <p className="text-sm text-sand-600">
         {publicKey
           ? "This browser can't receive alerts. On iPhone, first add Mismo to your home screen (Share → Add to Home Screen), then open it from there."
           : "Phone alerts aren't set up on this server yet."}
@@ -93,7 +93,7 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
     );
   }
   if (state === "denied") {
-    return <p className="text-sm text-stone-600">Alerts are blocked for this site. Allow notifications in your browser or phone settings, then reload.</p>;
+    return <p className="text-sm text-sand-600">Alerts are blocked for this site. Allow notifications in your browser or phone settings, then reload.</p>;
   }
   return (
     <div className="space-y-2">
@@ -109,8 +109,8 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
           </button>
         )}
       </div>
-      {state === "on" ? <p className="text-sm text-teal-800">Alerts are on for this device.</p> : null}
-      {note ? <p className="text-sm text-stone-600">{note}</p> : null}
+      {state === "on" ? <p className="text-sm text-brand-800">Alerts are on for this device.</p> : null}
+      {note ? <p className="text-sm text-sand-600">{note}</p> : null}
     </div>
   );
 }

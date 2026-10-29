@@ -52,7 +52,7 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
             {s.areaId ? (
               <>
                 {" · "}
-                <Link href={`/home/areas/${s.areaId}`} className="text-teal-700 hover:underline">{areaName}</Link>
+                <Link href={`/home/areas/${s.areaId}`} className="text-brand-700 hover:underline">{areaName}</Link>
               </>
             ) : null}
           </>
@@ -61,8 +61,8 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
       />
 
       {s.present !== "yes" ? (
-        <Card className="bg-amber-50/60 ring-amber-200">
-          <p className="text-sm text-stone-700">
+        <Card className="bg-saffron-50/60 ring-saffron-200">
+          <p className="text-sm text-sand-700">
             {s.present === "unknown" ? "Does the house have this?" : "Marked as not in the house."} Its maintenance jobs stay paused until it&apos;s confirmed.
           </p>
           <div className="mt-3 flex gap-2">
@@ -85,9 +85,9 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
           <Fact label="Warranty ends">{shortDate(s.warrantyEnd, today)}</Fact>
           <Fact label="Last serviced">{shortDate(s.lastServiced, today)}</Fact>
         </dl>
-        {s.notes ? <p className="mt-3 whitespace-pre-wrap text-sm text-stone-600">{s.notes}</p> : null}
+        {s.notes ? <p className="mt-3 whitespace-pre-wrap text-sm text-sand-600">{s.notes}</p> : null}
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-medium text-teal-700">Edit</summary>
+          <summary className="cursor-pointer text-sm font-medium text-brand-700">Edit</summary>
           <form action={updateSystem.bind(null, s.id)} className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="Name"><input name="name" required defaultValue={s.name} className={input} /></Field>
             <Field label="Area">
@@ -123,17 +123,17 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
         <Card>
           <CardTitle>Upkeep</CardTitle>
           {plans.length === 0 ? (
-            <p className="text-sm text-stone-500">No recurring jobs.</p>
+            <p className="text-sm text-sand-500">No recurring jobs.</p>
           ) : (
-            <ul className="divide-y divide-stone-100 text-sm">
+            <ul className="divide-y divide-sand-100 text-sm">
               {plans.map((p) => (
                 <li key={p.id}>
-                  <Link href={`/maintenance/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-stone-50">
+                  <Link href={`/maintenance/${p.id}`} className="flex justify-between gap-2 py-2 hover:bg-sand-50">
                     <span>
                       {p.title}
-                      <span className="ml-2 text-xs text-stone-500">{intervalLabel(p.intervalMonths)}</span>
+                      <span className="ml-2 text-xs text-sand-500">{intervalLabel(p.intervalMonths)}</span>
                     </span>
-                    <span className="shrink-0 text-xs text-stone-500">{p.nextDue ? relativeDay(p.nextDue, today) : "Not scheduled"}</span>
+                    <span className="shrink-0 text-xs text-sand-500">{p.nextDue ? relativeDay(p.nextDue, today) : "Not scheduled"}</span>
                   </Link>
                 </li>
               ))}
@@ -143,12 +143,12 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
         <Card>
           <CardTitle>Findings</CardTitle>
           {findings.length === 0 ? (
-            <p className="text-sm text-stone-500">None.</p>
+            <p className="text-sm text-sand-500">None.</p>
           ) : (
-            <ul className="divide-y divide-stone-100 text-sm">
+            <ul className="divide-y divide-sand-100 text-sm">
               {findings.map((f) => (
                 <li key={f.id}>
-                  <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-stone-50">
+                  <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-sand-50">
                     <span className="truncate">{f.title}</span>
                     <span className="flex shrink-0 gap-1"><SeverityBadge severity={f.severity} /><FindingStatusBadge status={f.status} /></span>
                   </Link>
@@ -164,7 +164,7 @@ async function SystemPage({ params }: Pick<PageProps<"/home/systems/[id]">, "par
 
       <Card>
         <form action={deleteSystem.bind(null, s.id)} className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-stone-600">Removing this also removes its maintenance jobs and files.</p>
+          <p className="text-sm text-sand-600">Removing this also removes its maintenance jobs and files.</p>
           <SubmitButton className={btnDanger} pendingText="Removing…">Remove</SubmitButton>
         </form>
       </Card>

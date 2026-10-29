@@ -2,6 +2,7 @@ import { and, eq, gte, inArray, isNotNull, lte, ne, sum } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
 import { markDoneToday } from "@/app/(app)/maintenance/actions";
+import { BirdPicture, BirdsOnBranch, Mandala } from "@/components/birds";
 import { PageSkeleton } from "@/components/skeleton";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, CardTitle, EmptyState, PageHeader, SeverityBadge, btnPrimary, btnSecondary } from "@/components/ui";
@@ -76,14 +77,28 @@ async function TodayPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={`${greeting}${firstName ? `, ${firstName}` : ""}`} subtitle={`${longDate(today)} · ${money(Number(monthSpend[0]?.total ?? 0))} spent this month`} />
+      <PageHeader
+        title={`${greeting}${firstName ? `, ${firstName}` : ""}`}
+        subtitle={`${longDate(today)} · ${money(Number(monthSpend[0]?.total ?? 0))} spent this month`}
+        action={
+          me.bird ? (
+            <BirdPicture bird={me.bird} className="h-14 w-14" />
+          ) : (
+            <Link href="/settings" className="text-sm text-brand-700 hover:underline">Pick your bird</Link>
+          )
+        }
+      />
 
       {walked < toWalk.length ? (
-        <Card className="bg-teal-50/60 ring-teal-200">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-medium text-teal-900">Walkthrough: {walked} of {toWalk.length} areas done</p>
-              <p className="text-sm text-teal-900/80">Go room by room and note what needs doing. It builds your list of findings.</p>
+        <Card className="relative overflow-hidden bg-brand-50 ring-brand-200">
+          <Mandala className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 text-brand-200" />
+          <div className="relative flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-brand-900">Walkthrough: {walked} of {toWalk.length} areas done</p>
+              <div className="my-2 h-2 max-w-sm overflow-hidden rounded-full bg-white" role="progressbar" aria-valuemin={0} aria-valuemax={toWalk.length} aria-valuenow={walked} aria-label="Walkthrough progress">
+                <div className="h-full rounded-full bg-shamrock-600" style={{ width: `${Math.round((walked / toWalk.length) * 100)}%` }} />
+              </div>
+              <p className="text-sm text-brand-900/80">Go room by room and note what needs doing. It builds your list of findings.</p>
             </div>
             <Link href="/walk" className={btnPrimary}>{walked === 0 ? "Start walking" : "Keep going"}</Link>
           </div>
@@ -91,20 +106,21 @@ async function TodayPage() {
       ) : null}
 
       <Card>
-        <CardTitle action={<Link href="/maintenance" className="text-sm text-teal-700 hover:underline">All upkeep</Link>}>Next 14 days</CardTitle>
+        <CardTitle action={<Link href="/maintenance" className="text-sm text-brand-700 hover:underline">All upkeep</Link>}>Next 14 days</CardTitle>
         {due.length === 0 ? (
-          <p className="text-sm text-stone-500">Nothing due. Nice.</p>
+          <p className="text-sm text-sand-500">Nothing due. Nice.</p>
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-sand-100">
             {due.map((d) => {
               const late = d.date < today;
+              const soon = !late && d.date <= addDays(today, 2);
               return (
                 <li key={d.key} className="flex items-center gap-3 py-2.5">
                   <Link href={d.href} className="min-w-0 flex-1">
-                    <span className="block text-stone-900 hover:underline">{d.title}</span>
-                    <span className="block text-xs text-stone-500">{d.detail}</span>
+                    <span className="block text-sand-900 hover:underline">{d.title}</span>
+                    <span className="block text-xs text-sand-500">{d.detail}</span>
                   </Link>
-                  <span className={`shrink-0 text-right text-xs ${late ? "font-medium text-red-700" : "text-stone-600"}`}>
+                  <span className={`shrink-0 text-right text-xs ${late ? "font-semibold text-sindoor-700" : soon ? "font-medium text-saffron-800" : "text-sand-600"}`}>
                     {relativeDay(d.date, today)}
                   </span>
                   {d.planId ? (
@@ -120,15 +136,15 @@ async function TodayPage() {
       </Card>
 
       {safety.length > 0 ? (
-        <Card className="ring-red-200">
+        <Card className="ring-sindoor-200">
           <CardTitle>Open safety issues</CardTitle>
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-sand-100">
             {safety.map(({ f, areaName }) => (
               <li key={f.id}>
-                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-stone-50">
+                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-sand-50">
                   <span className="min-w-0 truncate">
                     {f.title}
-                    {areaName ? <span className="ml-2 text-xs text-stone-500">{areaName}</span> : null}
+                    {areaName ? <span className="ml-2 text-xs text-sand-500">{areaName}</span> : null}
                   </span>
                   <SeverityBadge severity={f.severity} />
                 </Link>
@@ -136,10 +152,18 @@ async function TodayPage() {
             ))}
           </ul>
         </Card>
-      ) : null}
+      ) : (
+        <Card className="flex items-center gap-3 py-3">
+          <BirdsOnBranch className="w-20 shrink-0" />
+          <div>
+            <p className="font-medium text-sand-900">No open safety issues</p>
+            <p className="text-xs text-sand-500">The owl and the cardinal are keeping watch.</p>
+          </div>
+        </Card>
+      )}
 
       <Card>
-        <CardTitle action={<Link href="/projects" className="text-sm text-teal-700 hover:underline">All projects</Link>}>Active projects</CardTitle>
+        <CardTitle action={<Link href="/projects" className="text-sm text-brand-700 hover:underline">All projects</Link>}>Active projects</CardTitle>
         {projects.length === 0 ? (
           <EmptyState title="No active projects" body="Group findings into a project when you're ready to plan the work." />
         ) : (
@@ -151,18 +175,18 @@ async function TodayPage() {
                 <li key={p.id}>
                   <Link href={`/projects/${p.id}`} className="block hover:opacity-80">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-medium text-stone-900">{p.title}</span>
-                      <span className="shrink-0 text-xs text-stone-500">{PROJECT_STATUS[p.status]}</span>
+                      <span className="font-medium text-sand-900">{p.title}</span>
+                      <span className="shrink-0 text-xs text-sand-500">{PROJECT_STATUS[p.status]}</span>
                     </div>
                     {p.budgetCents ? (
                       <>
-                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-stone-100">
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sand-100">
                           <div className={`h-full ${bar.tone}`} style={{ width: `${bar.pct}%` }} />
                         </div>
-                        <p className="mt-0.5 text-xs text-stone-500">{money(s)} of {money(p.budgetCents)}</p>
+                        <p className="mt-0.5 text-xs text-sand-500">{money(s)} of {money(p.budgetCents)}</p>
                       </>
                     ) : s ? (
-                      <p className="text-xs text-stone-500">{money(s)} spent</p>
+                      <p className="text-xs text-sand-500">{money(s)} spent</p>
                     ) : null}
                   </Link>
                 </li>
@@ -176,10 +200,10 @@ async function TodayPage() {
         <Card>
           <CardTitle>Equipment age</CardTitle>
           {aging.length > 0 ? (
-            <ul className="mb-2 divide-y divide-stone-100 text-sm">
+            <ul className="mb-2 divide-y divide-sand-100 text-sm">
               {aging.map(({ s, age }) => (
                 <li key={s.id}>
-                  <Link href={`/home/systems/${s.id}`} className="flex justify-between gap-2 py-2 hover:bg-stone-50">
+                  <Link href={`/home/systems/${s.id}`} className="flex justify-between gap-2 py-2 hover:bg-sand-50">
                     <span>{s.name}</span>
                     <span className={age.tone}>{age.label}</span>
                   </Link>
@@ -188,9 +212,9 @@ async function TodayPage() {
             </ul>
           ) : null}
           {unknownAges > 0 ? (
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-sand-600">
               {unknownAges} system{unknownAges === 1 ? " has" : "s have"} no install year yet. Add them from the labels to see what&apos;s near the end of its life.{" "}
-              <Link href="/home" className="text-teal-700 hover:underline">Go to House</Link>
+              <Link href="/home" className="text-brand-700 hover:underline">Go to House</Link>
             </p>
           ) : null}
         </Card>

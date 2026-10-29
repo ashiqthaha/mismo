@@ -39,6 +39,7 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: { type: "string", required: false, defaultValue: "family", input: false },
+      bird: { type: "string", required: false, input: false },
     },
   },
   session: {

@@ -46,9 +46,9 @@ async function HousePage() {
             <Fact label="Bathrooms">{baths}</Fact>
             <Fact label="Exterior">{h.exterior}</Fact>
           </dl>
-          {h.notes ? <p className="mt-3 text-sm text-stone-600">{h.notes}</p> : null}
+          {h.notes ? <p className="mt-3 text-sm text-sand-600">{h.notes}</p> : null}
           <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-medium text-teal-700">Edit details</summary>
+            <summary className="cursor-pointer text-sm font-medium text-brand-700">Edit details</summary>
             <form action={updateHome.bind(null, h.id)} className="mt-3 grid gap-3 sm:grid-cols-2">
               <Field label="Name"><input name="name" defaultValue={h.name} className={input} /></Field>
               <Field label="Address"><input name="address" defaultValue={h.address ?? ""} className={input} /></Field>
@@ -72,9 +72,9 @@ async function HousePage() {
       ) : null}
 
       {checks.length > 0 ? (
-        <Card className="bg-amber-50/60 ring-amber-200">
+        <Card className="bg-saffron-50/60 ring-saffron-200">
           <CardTitle>Worth checking in a house this age</CardTitle>
-          <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700">
+          <ul className="list-disc space-y-1 pl-5 text-sm text-sand-700">
             {checks.map((c) => (
               <li key={c}>{c}</li>
             ))}
@@ -86,15 +86,15 @@ async function HousePage() {
         {[{ title: "Inside", list: indoor }, { title: "Outside", list: outdoor }].map(({ title, list }) => (
           <Card key={title}>
             <CardTitle>{title}</CardTitle>
-            <ul className="divide-y divide-stone-100">
+            <ul className="divide-y divide-sand-100">
               {list.map((a) => (
                 <li key={a.id}>
-                  <Link href={`/home/areas/${a.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-stone-50">
-                    <span className={a.present === "no" ? "text-stone-400 line-through" : "text-stone-800"}>{a.name}</span>
+                  <Link href={`/home/areas/${a.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-sand-50">
+                    <span className={a.present === "no" ? "text-sand-400 line-through" : "text-sand-800"}>{a.name}</span>
                     <span className="flex items-center gap-1.5">
                       {a.present === "unknown" ? <Badge>{PRESENCE.unknown}</Badge> : null}
                       {openCounts.get(a.id) ? (
-                        <Badge tone="bg-amber-50 text-amber-900 ring-amber-200">{openCounts.get(a.id)} open</Badge>
+                        <Badge tone="bg-saffron-50 text-saffron-900 ring-saffron-200">{openCounts.get(a.id)} open</Badge>
                       ) : null}
                     </span>
                   </Link>
@@ -107,15 +107,15 @@ async function HousePage() {
 
       <Card>
         <CardTitle>Systems and equipment</CardTitle>
-        <ul className="divide-y divide-stone-100">
+        <ul className="divide-y divide-sand-100">
           {systems.map(({ s, areaName }) => {
             const age = systemAge(s.installYear, s.expectedLifeYears, year);
             return (
               <li key={s.id}>
-                <Link href={`/home/systems/${s.id}`} className="flex items-center justify-between gap-3 py-2 hover:bg-stone-50">
+                <Link href={`/home/systems/${s.id}`} className="flex items-center justify-between gap-3 py-2 hover:bg-sand-50">
                   <span className="min-w-0">
-                    <span className={s.present === "no" ? "text-stone-400 line-through" : "text-stone-800"}>{s.name}</span>
-                    {areaName ? <span className="ml-2 text-xs text-stone-500">{areaName}</span> : null}
+                    <span className={s.present === "no" ? "text-sand-400 line-through" : "text-sand-800"}>{s.name}</span>
+                    {areaName ? <span className="ml-2 text-xs text-sand-500">{areaName}</span> : null}
                   </span>
                   <span className="flex shrink-0 items-center gap-2 text-xs">
                     {s.present === "unknown" ? <Badge>{PRESENCE.unknown}</Badge> : null}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Shamrock } from "./birds";
 
 const MAIN = [
   { href: "/", label: "Today", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10" },
@@ -27,12 +28,13 @@ function Icon({ d }: { d: string }) {
 /** The top bar. `pathname` is null in the prerendered shell, before the current page is known. */
 export function TopBarView({ pathname }: { pathname: string | null }) {
   const tab = (href: string) =>
-    `rounded-lg px-3 py-1.5 text-sm font-medium ${isActive(pathname, href) ? "bg-teal-50 text-teal-800" : "text-stone-600 hover:bg-stone-100"}`;
+    `rounded-lg px-3 py-1.5 text-sm font-medium transition ${isActive(pathname, href) ? "bg-white/15 text-white" : "text-brand-100 hover:bg-white/10 hover:text-white"}`;
   return (
-    <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-20 bg-brand-800">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight text-teal-800">
-          Mismo
+        <Link href="/" className="flex items-center gap-2">
+          <Shamrock className="h-7 w-7 text-brand-50" />
+          <span className="font-display text-xl font-semibold text-sand-50">Mismo</span>
         </Link>
         <nav className="hidden flex-1 items-center gap-1 sm:flex">
           {MAIN.map((item) => (
@@ -46,24 +48,31 @@ export function TopBarView({ pathname }: { pathname: string | null }) {
           <Link href="/settings" className={tab("/settings")}>Settings</Link>
         </div>
       </div>
+      <div className="henna-band" aria-hidden />
     </header>
   );
 }
 
 export function BottomNavView({ pathname }: { pathname: string | null }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-stone-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-sand-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
       <div className="grid grid-cols-5">
-        {MAIN.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${isActive(pathname, item.href) ? "text-teal-700" : "text-stone-500"}`}
-          >
-            <Icon d={item.icon} />
-            {item.label}
-          </Link>
-        ))}
+        {MAIN.map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center gap-0.5 pb-2 text-[11px] font-medium ${active ? "text-brand-700" : "text-sand-500"}`}
+            >
+              {/* A saffron marker over the current tab. */}
+              <span className={`mb-1 h-[3px] w-6 rounded-b-full ${active ? "bg-saffron-500" : "bg-transparent"}`} />
+              <Icon d={item.icon} />
+              {item.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );

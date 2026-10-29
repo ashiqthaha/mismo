@@ -34,8 +34,8 @@ async function WalkAreaPage({ params }: Pick<PageProps<"/walk/[areaId]">, "param
       <PageHeader title={a.name} subtitle="Note anything that needs fixing, is unsafe, or you'd like to change." back={{ href: "/walk", label: "Walkthrough" }} />
 
       {a.present === "unknown" ? (
-        <Card className="bg-amber-50/60 ring-amber-200">
-          <p className="text-sm text-stone-700">Is this part of the house?</p>
+        <Card className="bg-saffron-50/60 ring-saffron-200">
+          <p className="text-sm text-sand-700">Is this part of the house?</p>
           <div className="mt-2 flex gap-2">
             <form action={setAreaPresence.bind(null, a.id, "yes")}><SubmitButton className={btnSecondary}>Yes</SubmitButton></form>
             <form action={setAreaPresence.bind(null, a.id, "no")}><SubmitButton className={btnSecondary}>No, skip it</SubmitButton></form>
@@ -51,11 +51,11 @@ async function WalkAreaPage({ params }: Pick<PageProps<"/walk/[areaId]">, "param
       {systems.length > 0 ? (
         <Card>
           <CardTitle>Equipment in this area</CardTitle>
-          <p className="mb-2 text-sm text-stone-600">Confirm what&apos;s here. Open one to add its make, model and age from the label.</p>
-          <ul className="divide-y divide-stone-100">
+          <p className="mb-2 text-sm text-sand-600">Confirm what&apos;s here. Open one to add its make, model and age from the label.</p>
+          <ul className="divide-y divide-sand-100">
             {systems.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                <Link href={`/home/systems/${s.id}`} className={s.present === "no" ? "text-stone-400 line-through" : "text-teal-800 hover:underline"}>
+                <Link href={`/home/systems/${s.id}`} className={s.present === "no" ? "text-sand-400 line-through" : "text-brand-800 hover:underline"}>
                   {s.name}
                 </Link>
                 {s.present === "unknown" ? (
@@ -64,7 +64,7 @@ async function WalkAreaPage({ params }: Pick<PageProps<"/walk/[areaId]">, "param
                     <form action={setSystemPresence.bind(null, s.id, "no")}><SubmitButton className={`${btnSecondary} px-2.5 py-1 text-sm`}>No</SubmitButton></form>
                   </span>
                 ) : (
-                  <span className="text-xs text-stone-500">{s.present === "yes" ? (s.installYear ? `Installed ${s.installYear}` : "Age unknown") : "Not here"}</span>
+                  <span className="text-xs text-sand-500">{s.present === "yes" ? (s.installYear ? `Installed ${s.installYear}` : "Age unknown") : "Not here"}</span>
                 )}
               </li>
             ))}
@@ -75,12 +75,12 @@ async function WalkAreaPage({ params }: Pick<PageProps<"/walk/[areaId]">, "param
       <Card>
         <CardTitle>Logged here ({findings.length})</CardTitle>
         {findings.length === 0 ? (
-          <p className="text-sm text-stone-500">Nothing yet.</p>
+          <p className="text-sm text-sand-500">Nothing yet.</p>
         ) : (
-          <ul className="divide-y divide-stone-100">
+          <ul className="divide-y divide-sand-100">
             {findings.map((f) => (
               <li key={f.id}>
-                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-stone-50">
+                <Link href={`/findings/${f.id}`} className="flex items-center justify-between gap-2 py-2 hover:bg-sand-50">
                   <span className="truncate">{f.title}</span>
                   <span className="flex shrink-0 gap-1"><SeverityBadge severity={f.severity} /><FindingStatusBadge status={f.status} /></span>
                 </Link>

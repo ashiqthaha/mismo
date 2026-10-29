@@ -34,15 +34,15 @@ export function MarkDoneForm({ planId, today }: { planId: string; today: string 
   return (
     <form ref={formRef} onSubmit={onSubmit} className="grid gap-2 sm:grid-cols-3">
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-stone-700">Done on</span>
+        <span className="mb-1 block text-sm font-medium text-sand-700">Done on</span>
         <input name="doneOn" type="date" defaultValue={today} max={today} className={input} />
       </label>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-stone-700">Cost ($)</span>
+        <span className="mb-1 block text-sm font-medium text-sand-700">Cost ($)</span>
         <input name="cost" inputMode="decimal" placeholder="Optional" className={input} />
       </label>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-stone-700">Note</span>
+        <span className="mb-1 block text-sm font-medium text-sand-700">Note</span>
         <input name="note" placeholder="e.g. 16x25x1 filter, MERV 11" className={input} />
       </label>
       <div className="flex flex-wrap items-center gap-2 sm:col-span-3">
@@ -54,7 +54,7 @@ export function MarkDoneForm({ planId, today }: { planId: string; today: string 
           {busy ? "Saving…" : "Mark done"}
         </button>
       </div>
-      {error ? <p className="text-sm text-red-700 sm:col-span-3">{error}</p> : null}
+      {error ? <p className="text-sm text-sindoor-700 sm:col-span-3">{error}</p> : null}
     </form>
   );
 }

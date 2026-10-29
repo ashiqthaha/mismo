@@ -1,7 +1,95 @@
 @import "tailwindcss";
 
+/*
+ * Irish green with an Indian feel. Ireland's and India's flags share green,
+ * white and saffron, so those lead; sindoor red and peacock blue come from the
+ * Indian palette for safety and nice-to-have.
+ */
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Irish green: buttons, headings, links. 800 is the header. */
+  --color-brand-50: #edf7f1;
+  --color-brand-100: #d4ecdd;
+  --color-brand-200: #a9d8bc;
+  --color-brand-300: #74be95;
+  --color-brand-400: #3fa06f;
+  --color-brand-500: #188a5c;
+  --color-brand-600: #0f7a52;
+  --color-brand-700: #0b6e4f;
+  --color-brand-800: #0b5d41;
+  --color-brand-900: #0a4a35;
+  --color-brand-950: #052b1f;
+
+  /* Shamrock, the flag's green: progress and done. */
+  --color-shamrock-50: #eaf8f0;
+  --color-shamrock-100: #cdefdb;
+  --color-shamrock-200: #9edfba;
+  --color-shamrock-300: #63c894;
+  --color-shamrock-400: #2fb175;
+  --color-shamrock-500: #1aa36a;
+  --color-shamrock-600: #169b62;
+  --color-shamrock-700: #117a4e;
+  --color-shamrock-800: #0f6241;
+  --color-shamrock-900: #0c4f35;
+  --color-shamrock-950: #062c1e;
+
+  /* Sand and ink: an ivory page like handmade paper, green-black text. */
+  --color-sand-50: #fbf7ef;
+  --color-sand-100: #f4eee2;
+  --color-sand-200: #e8dfcf;
+  --color-sand-300: #d9cdb6;
+  --color-sand-400: #a59d8a;
+  --color-sand-500: #716d61;
+  --color-sand-600: #5a5f55;
+  --color-sand-700: #444a42;
+  --color-sand-800: #2e352f;
+  --color-sand-900: #1f2a24;
+  --color-sand-950: #121915;
+
+  /* Marigold saffron: small accents and "needs fixing". */
+  --color-saffron-50: #fdf6ea;
+  --color-saffron-100: #fcefd9;
+  --color-saffron-200: #f8dcae;
+  --color-saffron-300: #f2c27a;
+  --color-saffron-400: #ebaa4a;
+  --color-saffron-500: #e39b2d;
+  --color-saffron-600: #c77f1a;
+  --color-saffron-700: #a06213;
+  --color-saffron-800: #7a4a0b;
+  --color-saffron-900: #5e3909;
+  --color-saffron-950: #3a2205;
+
+  /* Sindoor red, also the cardinal's: safety and late. */
+  --color-sindoor-50: #fcf1ef;
+  --color-sindoor-100: #f8e3e0;
+  --color-sindoor-200: #f1c4be;
+  --color-sindoor-300: #e69a91;
+  --color-sindoor-400: #d76a5f;
+  --color-sindoor-500: #c4473b;
+  --color-sindoor-600: #b8322a;
+  --color-sindoor-700: #a8322d;
+  --color-sindoor-800: #7e211d;
+  --color-sindoor-900: #5e1a17;
+  --color-sindoor-950: #3a0e0c;
+
+  /* Peacock blue: nice to have. */
+  --color-peacock-50: #eef5f8;
+  --color-peacock-100: #e2eef3;
+  --color-peacock-200: #bfd9e4;
+  --color-peacock-300: #8dbcd0;
+  --color-peacock-400: #5498b4;
+  --color-peacock-500: #2f7c9b;
+  --color-peacock-600: #24698a;
+  --color-peacock-700: #1f5f7a;
+  --color-peacock-800: #1b4a5e;
+  --color-peacock-900: #163c4c;
+  --color-peacock-950: #0c2530;
+}
+
+/* Fraunces comes from next/font in layout.tsx, which sets --font-fraunces on <html>. */
+@theme inline {
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
 :root {
@@ -9,9 +97,23 @@
 }
 
 body {
-  background: var(--color-stone-50);
-  color: var(--color-stone-900);
+  background: var(--color-sand-50);
+  color: var(--color-sand-900);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* A henna-style band of scalloped arches and dots, for the dark green header. */
+.henna-band {
+  height: 14px;
+  background-repeat: repeat-x;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='14'%3E%3Cpath d='M0 2Q6 12 12 2Q18 12 24 2' fill='none' stroke='%23E39B2D' stroke-width='1.6'/%3E%3Ccircle cx='6' cy='10.5' r='1.6' fill='%23FBF7EF'/%3E%3Ccircle cx='18' cy='10.5' r='1.6' fill='%23FBF7EF'/%3E%3Ccircle cx='12' cy='5.5' r='1.4' fill='%23E39B2D'/%3E%3C/svg%3E");
+}
+
+/* The same band in green, for light backgrounds. */
+.henna-band-light {
+  height: 14px;
+  background-repeat: repeat-x;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='14'%3E%3Cpath d='M0 2Q6 12 12 2Q18 12 24 2' fill='none' stroke='%230B6E4F' stroke-width='1.6'/%3E%3Ccircle cx='6' cy='10.5' r='1.6' fill='%23E39B2D'/%3E%3Ccircle cx='18' cy='10.5' r='1.6' fill='%23E39B2D'/%3E%3Ccircle cx='12' cy='5.5' r='1.4' fill='%230B6E4F'/%3E%3C/svg%3E");
 }
 
 /* 16px stops iPhone Safari from zooming into form fields. */

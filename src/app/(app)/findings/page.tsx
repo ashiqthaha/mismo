@@ -2,13 +2,15 @@ import { and, asc, count, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { BirdBadge } from "@/components/birds";
 import { PageSkeleton } from "@/components/skeleton";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, EmptyState, FindingStatusBadge, PageHeader, SeverityBadge, btnPrimary, btnSecondary, input } from "@/components/ui";
 import { shortDate, todayLocal } from "@/lib/dates";
 import { db } from "@/lib/db";
-import { area, file, finding, type FindingStatus, type Severity } from "@/lib/db/schema";
+import { area, file, finding, user, type FindingStatus, type Severity } from "@/lib/db/schema";
 import { FINDING_STATUS, SEVERITY } from "@/lib/format";
+import { displayName } from "@/lib/people";
 import { requireUser } from "@/lib/session";
 import { createProjectFromFindings } from "./actions";
 
@@ -39,9 +41,10 @@ async function FindingsPage({ searchParams }: Pick<PageProps<"/findings">, "sear
 
   const [rows, areas] = await Promise.all([
     db
-      .select({ f: finding, areaName: area.name })
+      .select({ f: finding, areaName: area.name, byName: user.name, byEmail: user.email, byBird: user.bird })
       .from(finding)
       .leftJoin(area, eq(area.id, finding.areaId))
+      .leftJoin(user, eq(user.id, finding.createdBy))
       .where(conds.length ? and(...conds) : undefined)
       .orderBy(sql`case ${finding.severity} when 'safety' then 0 when 'fix' then 1 else 2 end`, desc(finding.createdAt)),
     db.select({ id: area.id, name: area.name }).from(area).orderBy(asc(area.name)),
@@ -93,17 +96,17 @@ async function FindingsPage({ searchParams }: Pick<PageProps<"/findings">, "sear
       ) : (
         <form action={createProjectFromFindings} className="space-y-3">
           <Card className="p-0">
-            <ul className="divide-y divide-stone-100">
-              {rows.map(({ f, areaName }) => (
+            <ul className="divide-y divide-sand-100">
+              {rows.map(({ f, areaName, byName, byEmail, byBird }) => (
                 <li key={f.id} className="flex items-start gap-3 px-4 py-3">
                   {selectable(f.status) ? (
-                    <input type="checkbox" name="ids" value={f.id} className="mt-1 h-5 w-5 accent-teal-700" aria-label={`Select ${f.title}`} />
+                    <input type="checkbox" name="ids" value={f.id} className="mt-1 h-5 w-5 accent-brand-700" aria-label={`Select ${f.title}`} />
                   ) : (
                     <span className="mt-1 h-5 w-5 shrink-0" />
                   )}
                   <Link href={`/findings/${f.id}`} className="min-w-0 flex-1">
-                    <span className="block font-medium text-stone-900 hover:underline">{f.title}</span>
-                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
+                    <span className="block font-medium text-sand-900 hover:underline">{f.title}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-sand-500">
                       <SeverityBadge severity={f.severity} />
                       <FindingStatusBadge status={f.status} />
                       {areaName ? <span>{areaName}</span> : null}
@@ -111,6 +114,7 @@ async function FindingsPage({ searchParams }: Pick<PageProps<"/findings">, "sear
                       <span>· {shortDate(todayLocal(f.createdAt), today)}</span>
                     </span>
                   </Link>
+                  {byName || byEmail ? <BirdBadge bird={byBird} name={displayName({ name: byName, email: byEmail })} /> : null}
                 </li>
               ))}
             </ul>

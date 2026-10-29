@@ -31,7 +31,7 @@ export async function spentOnProject(projectId: string): Promise<number> {
 
 /** Width and color for a spent-vs-budget bar. */
 export function budgetBar(spent: number, budget: number | null): { pct: number; tone: string } {
-  if (!budget) return { pct: 0, tone: "bg-teal-600" };
+  if (!budget) return { pct: 0, tone: "bg-brand-600" };
   const pct = spent / budget;
-  return { pct: Math.min(100, pct * 100), tone: pct >= 1 ? "bg-red-600" : pct >= 0.8 ? "bg-amber-500" : "bg-teal-600" };
+  return { pct: Math.min(100, pct * 100), tone: pct >= 1 ? "bg-sindoor-600" : pct >= 0.8 ? "bg-saffron-500" : "bg-brand-600" };
 }

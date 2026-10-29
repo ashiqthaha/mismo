@@ -11,6 +11,8 @@ import {
 } from "drizzle-orm/pg-core";
 
 export type Role = "owner" | "family";
+// Each person picks a bird; it marks the notes, photos and other things they add.
+export type Bird = "owl" | "cardinal";
 export type Presence = "yes" | "unknown" | "no";
 export type Severity = "safety" | "fix" | "nice";
 export type FindingStatus = "new" | "triaged" | "in_project" | "wont_do" | "fixed";
@@ -52,6 +54,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   role: text("role").$type<Role>().notNull().default("family"),
+  bird: text("bird").$type<Bird>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
