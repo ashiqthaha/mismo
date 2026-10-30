@@ -65,8 +65,8 @@ export function Shamrock(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Both birds perched on a branch with shamrock leaves. */
-export function BirdsOnBranch(props: SVGProps<SVGSVGElement>) {
+/** The branch with shamrock leaves, drawn into a 264×140 frame. The owl perches at x 40, the cardinal at x 152. */
+export function Branch() {
   const leaf = (x: number, y: number, s: number) => (
     <g transform={`translate(${x} ${y}) scale(${s / 20})`}>
       <circle cx="10" cy="5" r="5" fill="#169B62" />
@@ -76,7 +76,7 @@ export function BirdsOnBranch(props: SVGProps<SVGSVGElement>) {
     </g>
   );
   return (
-    <svg viewBox="0 0 264 140" aria-hidden {...props}>
+    <>
       <path d="M0 128 Q90 108 170 121 T264 110" stroke="#5B3A1E" strokeWidth="5" fill="none" strokeLinecap="round" />
       <path d="M120 116 Q132 96 150 92 M220 116 Q232 98 250 96" stroke="#5B3A1E" strokeWidth="3" fill="none" strokeLinecap="round" />
       {leaf(140, 80, 18)}
@@ -84,6 +84,15 @@ export function BirdsOnBranch(props: SVGProps<SVGSVGElement>) {
       {leaf(10, 110, 16)}
       {leaf(128, 104, 14)}
       {leaf(230, 100, 14)}
+    </>
+  );
+}
+
+/** Both birds perched on a branch with shamrock leaves. */
+export function BirdsOnBranch(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 264 140" aria-hidden {...props}>
+      <Branch />
       <Owl x="40" y="28" width="80" height="88" />
       <Cardinal x="152" y="60" width="78" height="62" />
     </svg>

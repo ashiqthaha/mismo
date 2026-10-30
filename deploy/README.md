@@ -23,6 +23,7 @@ Fill in `.env`:
 | `EMAIL_REPLY_TO` | A real inbox for replies to reminders. Emails a person triggers reply to that person |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | `docker run --rm node:24-slim npx -y web-push generate-vapid-keys` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Redirect URI: `<BETTER_AUTH_URL>/api/auth/callback/google` |
+| `WEATHER_LAT`, `WEATHER_LON` | Optional. The house's latitude and longitude (two decimals is enough), so the sign-in scene shows the live weather there. Kept on the server; the page only gets the conditions |
 
 Optional: put the house details in `config/home.json` (same fields as `data/home.local.json`). They load once, on the first start.
 

@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { btnPrimary, btnSecondary, input } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
+import { useSceneSky } from "./sky-context";
+import { WeatherChip } from "./weather-chip";
 
 function errorMessage(code: string): string {
   const c = code.toLowerCase();
@@ -38,12 +40,16 @@ function MailIcon() {
   );
 }
 
-/** The white card with the gold kasavu stripe along its top. */
+/** The white card with a gold kasavu border, the weather at the house, and frost when it's freezing. */
 export function LoginCard({ children }: { children: ReactNode }) {
+  const { sky, live } = useSceneSky();
+  const frost = live && (sky.freezing || sky.tempF <= 32);
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-sand-200">
-      <div className="kasavu" aria-hidden />
-      <div className="p-5">{children}</div>
+    <div className="kasavu-card rounded-[1.4rem] bg-white p-1.5 shadow-lg shadow-brand-950/10">
+      <div className={`kasavu-card-inner rounded-[1.05rem] p-5 ${frost ? "frosty" : "bg-white"}`}>
+        <WeatherChip />
+        {children}
+      </div>
     </div>
   );
 }
@@ -83,35 +89,33 @@ export function LoginForm({ google, error, devEmail }: { google: boolean; error?
 
   if (step === "sent") {
     return (
-      <div className="mt-6">
-        <LoginCard>
-          <p className="font-display text-lg font-semibold text-brand-800">Check your email</p>
-          <p className="mt-1 text-sm text-sand-600">If {email} is invited, a sign-in link is on its way. It works once and lasts 1 hour.</p>
-          <p className="mt-3 rounded-lg bg-shamrock-50 p-2.5 text-xs text-shamrock-900">
-            Once you&apos;re in, add a passkey in Settings. Next time on this device, signing in is one tap.
+      <LoginCard>
+        <p className="font-display text-lg font-semibold text-brand-800">Check your email</p>
+        <p className="mt-1 text-sm text-sand-600">If {email} is invited, a sign-in link is on its way. It works once and lasts 1 hour.</p>
+        <p className="mt-3 rounded-lg bg-shamrock-50 p-2.5 text-xs text-shamrock-900">
+          Once you&apos;re in, add a passkey in Settings. Next time on this device, signing in is one tap.
+        </p>
+        {devEmail ? (
+          <p className="mt-3 rounded-lg bg-saffron-50 p-2 text-xs text-saffron-900">
+            Email isn&apos;t set up on this server, so the link is printed in the server&apos;s console instead.
           </p>
-          {devEmail ? (
-            <p className="mt-3 rounded-lg bg-saffron-50 p-2 text-xs text-saffron-900">
-              Email isn&apos;t set up on this server, so the link is printed in the server&apos;s console instead.
-            </p>
-          ) : null}
-          <button type="button" className={`${btnSecondary} mt-4 w-full`} onClick={() => setStep("email")}>
-            Use a different email
-          </button>
-        </LoginCard>
-      </div>
+        ) : null}
+        <button type="button" className={`${btnSecondary} mt-4 w-full`} onClick={() => setStep("email")}>
+          Use a different email
+        </button>
+      </LoginCard>
     );
   }
 
   const showEmail = step === "email" || !passkeysWork;
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="space-y-4">
       {error ? <p className="rounded-lg bg-sindoor-50 p-3 text-sm text-sindoor-800">{errorMessage(error)}</p> : null}
       <LoginCard>
         {passkeysWork ? (
           <>
-            <button type="button" className={`${btnPrimary} min-h-12 w-full text-base sm:min-h-12`} onClick={signInWithPasskey} disabled={passkeyBusy}>
+            <button type="button" className={`${btnPrimary} glint min-h-12 w-full text-base sm:min-h-12`} onClick={signInWithPasskey} disabled={passkeyBusy}>
               <FingerprintIcon />
               {passkeyBusy ? "Waiting for your device…" : "Sign in with passkey"}
             </button>

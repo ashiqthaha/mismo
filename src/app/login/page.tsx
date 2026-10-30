@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Sign in" };
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <LoginShell>
-      <Suspense fallback={<div className="mt-6 h-52 rounded-2xl bg-white/70 ring-1 ring-sand-200" />}>
+      <Suspense fallback={<div className="h-52 rounded-[1.4rem] bg-white/70 ring-1 ring-sand-200" />}>
         <LoginBox searchParams={searchParams} />
       </Suspense>
     </LoginShell>

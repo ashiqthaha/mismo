@@ -12,13 +12,11 @@ export const metadata: Metadata = { title: "Sign in" };
 export default function ConfirmPage({ searchParams }: PageProps<"/login/confirm">) {
   return (
     <LoginShell>
-      <div className="mt-6">
-        <LoginCard>
-          <Suspense fallback={<div className="h-28" />}>
-            <Confirm searchParams={searchParams} />
-          </Suspense>
-        </LoginCard>
-      </div>
+      <LoginCard>
+        <Suspense fallback={<div className="h-28" />}>
+          <Confirm searchParams={searchParams} />
+        </Suspense>
+      </LoginCard>
     </LoginShell>
   );
 }
