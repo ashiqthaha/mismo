@@ -85,6 +85,9 @@
   --color-peacock-800: #1b4a5e;
   --color-peacock-900: #163c4c;
   --color-peacock-950: #0c2530;
+
+  /* Kasavu gold, from the border of a Kerala sari: the sign-in card's stripe and sparkles. */
+  --color-kasavu: #c9a227;
 }
 
 /* Fraunces comes from next/font in layout.tsx, which sets --font-fraunces on <html>. */
@@ -114,6 +117,71 @@ body {
   height: 14px;
   background-repeat: repeat-x;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='14'%3E%3Cpath d='M0 2Q6 12 12 2Q18 12 24 2' fill='none' stroke='%230B6E4F' stroke-width='1.6'/%3E%3Ccircle cx='6' cy='10.5' r='1.6' fill='%23E39B2D'/%3E%3Ccircle cx='18' cy='10.5' r='1.6' fill='%23E39B2D'/%3E%3Ccircle cx='12' cy='5.5' r='1.4' fill='%230B6E4F'/%3E%3C/svg%3E");
+}
+
+/* Two gold lines on ivory, like the border of a Kerala kasavu sari. */
+.kasavu {
+  height: 6px;
+  border-top: 2px solid var(--color-kasavu);
+  border-bottom: 3px solid var(--color-kasavu);
+  background: var(--color-sand-50);
+}
+
+/* Sign-in page: gold sparkles twinkle, shamrocks and jasmine drift up, the pookalam turns. */
+@keyframes twinkle {
+  0%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes drift-up {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-75vh) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+@keyframes slow-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.twinkle {
+  animation: twinkle 2.8s ease-in-out infinite both;
+}
+
+.drift-up {
+  animation: drift-up 12s linear infinite both;
+}
+
+.slow-turn {
+  animation: slow-turn 90s linear infinite;
+}
+
+/* Someone who has asked for less motion gets the same picture, standing still. */
+@media (prefers-reduced-motion: reduce) {
+  .twinkle,
+  .drift-up,
+  .slow-turn {
+    animation: none;
+  }
+  .drift-up {
+    opacity: 0.6;
+  }
 }
 
 /* 16px stops iPhone Safari from zooming into form fields. */

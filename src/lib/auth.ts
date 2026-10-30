@@ -1,10 +1,11 @@
+import { passkey as passkeyPlugin } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
-import { account, invite, session, user, verification, type Role } from "./db/schema";
+import { account, invite, passkey, session, user, verification, type Role } from "./db/schema";
 import { emailHtml, sendEmail } from "./email";
 
 function ownerEmail(): string {
@@ -24,6 +25,8 @@ export async function allowedRole(email: string): Promise<Role | null> {
   return existing?.role ?? null;
 }
 
+const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
 const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 export function googleEnabled(): boolean {
@@ -34,7 +37,7 @@ export const auth = betterAuth({
   appName: "Mismo",
   database: drizzleAdapter(db, {
     provider: "pg",
-    schema: { user, session, account, verification },
+    schema: { user, session, account, verification, passkey },
   }),
   user: {
     additionalFields: {
@@ -60,22 +63,28 @@ export const auth = betterAuth({
     : {},
   plugins: [
     magicLink({
-      expiresIn: 60 * 15,
-      sendMagicLink: async ({ email, url }) => {
+      expiresIn: 60 * 60,
+      sendMagicLink: async ({ email, token }) => {
         // Not invited: send nothing, and say nothing different to the person asking.
         if (!(await allowedRole(email))) return;
+        // The email points at a page with a Sign in button, not at the link itself, so mail
+        // scanners and link previews that open it can't use it up.
+        const url = new URL("/login/confirm", baseURL);
+        url.searchParams.set("token", token);
         await sendEmail({
           to: email,
           subject: "Your Mismo sign-in link",
-          text: `Open this link to sign in to Mismo. It works once and expires in 15 minutes.\n\n${url}`,
+          text: `Open this link to sign in to Mismo. It works once and expires in 1 hour.\n\n${url}`,
           html: emailHtml(
             "Sign in to Mismo",
-            "Tap the button to sign in. The link works once and expires in 15 minutes.",
-            { label: "Sign in", url },
+            "Tap the button to sign in. The link works once and expires in 1 hour.",
+            { label: "Sign in", url: url.toString() },
           ),
         });
       },
     }),
+    // Only someone already signed in can add a passkey, so passkeys never let a new person in.
+    passkeyPlugin({ rpName: "Mismo", rpID: new URL(baseURL).hostname, origin: new URL(baseURL).origin }),
     nextCookies(),
   ],
   databaseHooks: {

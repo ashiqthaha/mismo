@@ -1,10 +1,10 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
-import { invite, notificationPref, user, type Bird, type Role } from "@/lib/db/schema";
+import { invite, notificationPref, passkey, user, type Bird, type Role } from "@/lib/db/schema";
 import { emailHtml, sendEmail } from "@/lib/email";
 import { str } from "@/lib/format";
 import { EVENTS } from "@/lib/notify";
@@ -25,6 +25,13 @@ export async function updateMyBird(formData: FormData) {
   const bird: Bird | null = value === "owl" || value === "cardinal" ? value : null;
   await db.update(user).set({ bird, updatedAt: new Date() }).where(eq(user.id, me.id));
   await audit(me.id, "update", "user", me.id, { bird });
+  refresh();
+}
+
+export async function removeMyPasskey(passkeyId: string) {
+  const me = await requireUser();
+  await db.delete(passkey).where(and(eq(passkey.id, passkeyId), eq(passkey.userId, me.id)));
+  await audit(me.id, "delete", "passkey", passkeyId);
   refresh();
 }
 

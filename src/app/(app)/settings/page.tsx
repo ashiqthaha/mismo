@@ -1,6 +1,8 @@
-import { asc, eq, isNull } from "drizzle-orm";
+import { getAuthenticatorName } from "@better-auth/passkey";
+import { asc, desc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AddPasskey } from "@/components/add-passkey";
 import { BIRDS, BirdBadge, BirdPicture } from "@/components/birds";
 import { PushToggle } from "@/components/push-toggle";
 import { SignOutButton } from "@/components/sign-out";
@@ -8,13 +10,13 @@ import { PageSkeleton } from "@/components/skeleton";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge, Card, CardTitle, Field, PageHeader, btnSecondary, input } from "@/components/ui";
 import { db } from "@/lib/db";
-import { invite, notificationPref, user } from "@/lib/db/schema";
+import { invite, notificationPref, passkey, user } from "@/lib/db/schema";
 import { emailEnabled } from "@/lib/email";
 import { EVENTS } from "@/lib/notify";
 import { displayName } from "@/lib/people";
 import { vapidPublicKey } from "@/lib/push";
 import { requireUser } from "@/lib/session";
-import { invitePerson, removePerson, revokeInvite, savePrefs, updateMyBird, updateMyName } from "./actions";
+import { invitePerson, removeMyPasskey, removePerson, revokeInvite, savePrefs, updateMyBird, updateMyName } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -28,10 +30,11 @@ export default function Page() {
 
 async function SettingsPage() {
   const me = await requireUser();
-  const [prefs, people, invites] = await Promise.all([
+  const [prefs, people, invites, passkeys] = await Promise.all([
     db.select().from(notificationPref).where(eq(notificationPref.userId, me.id)),
     db.select().from(user).orderBy(asc(user.name)),
     db.select().from(invite).where(isNull(invite.acceptedAt)).orderBy(asc(invite.email)),
+    db.select().from(passkey).where(eq(passkey.userId, me.id)).orderBy(desc(passkey.createdAt)),
   ]);
   const pref = (event: string) => prefs.find((p) => p.event === event) ?? { email: true, push: true };
   // Read from the table, not the session, so a new pick shows straight away.
@@ -70,6 +73,33 @@ async function SettingsPage() {
             );
           })}
         </form>
+      </Card>
+
+      <Card>
+        <CardTitle>Passkeys</CardTitle>
+        <p className="mb-3 text-sm text-sand-600">
+          Sign in with Face ID, your fingerprint or Windows Hello instead of waiting for an email. Add one on each phone and computer you use.
+        </p>
+        {passkeys.length ? (
+          <ul className="mb-3 divide-y divide-sand-100">
+            {passkeys.map((p) => {
+              const maker = getAuthenticatorName(p.aaguid);
+              const added = p.createdAt?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
+              return (
+                <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+                  <span className="min-w-0">
+                    <span className="block text-sand-900">{p.name || maker || "Passkey"}</span>
+                    <span className="block text-xs text-sand-500">{[p.name ? maker : null, added ? `added ${added}` : null].filter(Boolean).join(" · ")}</span>
+                  </span>
+                  <form action={removeMyPasskey.bind(null, p.id)}>
+                    <button type="submit" className="text-xs text-sindoor-700 hover:underline">Remove</button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+        <AddPasskey first={passkeys.length === 0} />
       </Card>
 
       <Card>
