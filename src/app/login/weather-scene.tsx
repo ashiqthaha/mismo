@@ -2,16 +2,38 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { Branch, Cardinal, Owl } from "@/components/birds";
-import { createScene, type SceneInputs } from "./scene-engine";
+import { CORE_LAYOUT, createScene, type SceneInputs, type SceneLayout } from "./scene-engine";
 import { useSceneSky } from "./sky-context";
 
-// The sign-in page's scene: a pookalam behind the owl and cardinal, Irish hills
-// with Kerala palms, and backwaters with a snake boat. The sky and weather are
-// drawn by scene-engine.ts on canvases behind and in front of this. The scene is
-// drawn at 360×440 and scaled to cover its box, anchored at the bottom.
+// The sign-in page's scene, filling the screen: a pookalam behind the owl and
+// cardinal, Irish hills with Kerala palms, and backwaters with a snake boat. The
+// sky and weather are drawn by scene-engine.ts on canvases behind and in front of
+// this. The birds and pookalam are a 360×440 core; the hills, palms and water
+// carry on around it to the edges of the screen.
 
-const W = 360;
-const H = 440;
+const CORE_W = 360;
+const CORE_H = 440;
+
+/** Wide screens put the card in a column on the right. Matches the `wide` variant in globals.css. */
+const WIDE = "(min-width: 1024px) and (min-aspect-ratio: 4/3)";
+const CARD_COLUMN = 480;
+
+/**
+ * Where the core goes. On a wide screen it fills the height, centred in the part the
+ * card leaves open. Otherwise it fits the hero area at the top, and the water carries
+ * on under the card to the bottom of the screen.
+ */
+function layoutFor(vw: number, vh: number, heroH: number, wide: boolean): SceneLayout {
+  if (wide) {
+    const scale = vh / CORE_H;
+    const w = vw / scale;
+    const open = (vw - CARD_COLUMN) / scale;
+    return { w, h: CORE_H, ox: Math.max(0, open / 2 - CORE_W / 2), oy: 0, scale, open };
+  }
+  const scale = Math.min(vw / CORE_W, heroH / CORE_H);
+  const w = vw / scale;
+  return { w, h: vh / scale, ox: (w - CORE_W) / 2, oy: heroH / scale - CORE_H, scale, open: w };
+}
 
 // Thrown by a tap anywhere on the scene: shamrocks, jasmine and gold sparkles.
 const LUCK = [
@@ -21,6 +43,26 @@ const LUCK = [
 ];
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * A steady pseudo-random number from 0 to 1, so the same screen always draws the same way.
+ * Integer maths only: the server and the browser must get exactly the same numbers.
+ */
+const jitter = (i: number) => {
+  let t = Math.imul(i + 1, 0x6d2b79f5);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+/** A rolling hill line from the left edge to the right, lined up with the core so the middle always looks the same. */
+function ridge(w: number, ox: number, base: number, amp: number, span: number, offset: number) {
+  let x = ox + offset - Math.ceil((ox + offset) / (2 * span)) * 2 * span;
+  const start = x;
+  let d = `M${start} ${base} Q${x + span / 2} ${base - amp} ${x + span} ${base}`;
+  for (x += span; x < w; x += span) d += ` T${x + span} ${base}`;
+  return { line: d, start };
+}
 
 /** A pookalam, the Onam flower carpet, blooming in ring by ring and slowly turning. */
 function Pookalam() {
@@ -49,9 +91,10 @@ function Pookalam() {
   );
 }
 
-function Palm({ x, flip, delay, sway, swayFor }: { x: number; flip?: boolean; delay: number; sway: number; swayFor: number }) {
+/** A coconut palm standing at x, its foot on the shore at y. Smaller ones look further away. */
+function Palm({ x, y, size = 1, flip, delay, sway, swayFor }: { x: number; y: number; size?: number; flip?: boolean; delay: number; sway: number; swayFor: number }) {
   return (
-    <g transform={`translate(${x} 0)${flip ? " scale(-1 1)" : ""}`}>
+    <g transform={`translate(${x} ${y}) scale(${flip ? -size : size} ${size}) translate(0 -392)`}>
       <g className="palm-sway" style={{ "--sway": `${sway}deg`, animationDuration: `${swayFor}s`, animationDelay: `${delay}s` } as CSSProperties}>
         <path d="M-4 392 Q-12 330 0 290" stroke="#052B1F" strokeWidth="6" fill="none" />
         <g fill="#052B1F">
@@ -68,10 +111,11 @@ function Palm({ x, flip, delay, sway, swayFor }: { x: number; flip?: boolean; de
 export function WeatherScene() {
   const { sky, hour, season, moon } = useSceneSky();
   const wrap = useRef<HTMLDivElement>(null);
+  const hero = useRef<HTMLDivElement>(null);
   const back = useRef<HTMLCanvasElement>(null);
   const front = useRef<HTMLCanvasElement>(null);
   const engine = useRef<ReturnType<typeof createScene> | null>(null);
-  const [scale, setScale] = useState(1);
+  const [layout, setLayout] = useState<SceneLayout | null>(null);
 
   const windy = Math.max(sky.wind, sky.gusts * 0.7);
   const inputs = useMemo<SceneInputs>(
@@ -82,12 +126,22 @@ export function WeatherScene() {
   useEffect(() => {
     const scene = createScene(back.current!, front.current!, wrap.current!);
     engine.current = scene;
-    const observer = new ResizeObserver(([entry]) => {
-      const next = Math.max(entry.contentRect.width / W, entry.contentRect.height / H);
-      setScale(next);
+    const wide = window.matchMedia(WIDE);
+    // Kept here, not read from the refs, so a late resize after leaving the page still finds them.
+    const wrapEl = wrap.current!;
+    const heroEl = hero.current!;
+    const measure = () => {
+      const box = wrapEl.getBoundingClientRect();
+      const heroH = heroEl.getBoundingClientRect().height;
+      // Mid-resize a box can measure zero, which would make the scene endlessly wide.
+      if (!(box.width > 0 && box.height > 0 && heroH > 0)) return;
+      const next = layoutFor(box.width, box.height, heroH, wide.matches);
+      setLayout(next);
       scene.resize(next);
-    });
-    observer.observe(wrap.current!);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(wrapEl);
+    observer.observe(heroEl);
     scene.start(reducedMotion());
     return () => {
       observer.disconnect();
@@ -119,6 +173,7 @@ export function WeatherScene() {
     }
   }
 
+  const { w, h, ox, oy, scale } = layout ?? CORE_LAYOUT;
   const freezing = sky.freezing || sky.tempF <= 32;
   const snowCover = sky.snow > 0 ? Math.min(1, 0.45 + sky.snow * 0.25) : 0;
   const frozen = sky.tempF <= 20;
@@ -127,44 +182,83 @@ export function WeatherScene() {
   const sway = 2 + windy * 0.32;
   const swayFor = Math.max(0.8, 4.2 - windy * 0.07);
   const fade = "transition-opacity duration-1000";
+  const shore = oy + 396;
+
+  const land = useMemo(() => {
+    const far = ridge(w, ox, oy + 344, 26, 125, 0);
+    const near = ridge(w, ox, oy + 366, 22, 150, 40);
+    // The two palms by the birds, then more along the shore out to both edges, a little smaller.
+    const palms = [
+      { x: ox + 62, size: 1, flip: false },
+      { x: ox + 306, size: 1, flip: true },
+    ];
+    for (let i = 1, x = ox + 62 - 150; x > -60; i++, x -= Math.round(130 + jitter(i) * 90)) palms.push({ x, size: Math.round(78 + jitter(i + 7) * 20) / 100, flip: i % 2 === 1 });
+    for (let i = 1, x = ox + 306 + 150; x < w + 60; i++, x += Math.round(130 + jitter(i + 3) * 90)) palms.push({ x, size: Math.round(78 + jitter(i + 11) * 20) / 100, flip: i % 2 === 0 });
+    const ripples: { x: number; y: number; len: number; delay: number }[] = [];
+    for (let y = shore + 14, row = 0; y < h - 4; y += 16, row++) {
+      for (let x = ((row * 37) % 90) - 40, i = 0; x < w; x += 110, i++) {
+        const n = row * 31 + i;
+        ripples.push({ x: Math.round(x + jitter(n) * 60), y, len: Math.round(14 + jitter(n + 5) * 12), delay: -Math.round(jitter(n + 9) * 32) / 10 });
+      }
+    }
+    return { far, near, palms, ripples };
+  }, [w, h, ox, oy, shore]);
 
   return (
-    <div ref={wrap} className="absolute inset-0 overflow-hidden" onPointerDown={luck} aria-hidden>
-      <div className="absolute bottom-0 left-1/2 origin-bottom" style={{ width: W, height: H, transform: `translateX(-50%) scale(${scale})` }}>
+    <div ref={wrap} className="fixed inset-0 overflow-hidden bg-brand-900" onPointerDown={luck} aria-hidden>
+      {/* Measures the hero area at the top on a phone; the card's top padding uses the same height. */}
+      <div ref={hero} className="pointer-events-none invisible absolute inset-x-0 top-0 h-[min(30rem,62svh)]" />
+      <div
+        className="absolute top-0 left-0 origin-top-left transition-opacity duration-500"
+        style={{ width: w, height: h, transform: `scale(${scale})`, opacity: layout ? 1 : 0 }}
+      >
         <canvas ref={back} className="absolute inset-0 h-full w-full" />
-        <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 h-full w-full">
-          <Pookalam />
-          <path d="M0 352 Q60 322 130 342 T250 336 T360 340 V440 H0Z" fill="#0F7A52" />
-          <path className={fade} style={{ opacity: snowCover }} d="M0 352 Q60 322 130 342 T250 336 T360 340 V350 Q300 348 250 346 T130 352 Q60 334 0 362Z" fill="#FFFFFF" />
-          <path d="M0 372 Q90 346 190 366 T360 356 V440 H0Z" fill="#0B5D41" />
-          <path className={fade} style={{ opacity: snowCover }} d="M0 372 Q90 346 190 366 T360 356 V366 Q280 368 190 376 Q90 356 0 382Z" fill="#FFFFFF" />
-          <Palm x={62} delay={0} sway={sway} swayFor={swayFor} />
-          <Palm x={306} flip delay={-1.7} sway={sway} swayFor={swayFor} />
-          <rect y="396" width={W} height="44" fill={frozen ? "#D6E8EF" : "#124E5E"} style={{ transition: "fill 1s" }} />
+        <svg viewBox={`0 0 ${w} ${h}`} className="absolute inset-0 h-full w-full">
+          <defs>
+            <linearGradient id="deep-water" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#04222B" stopOpacity="0" />
+              <stop offset="1" stopColor="#04222B" stopOpacity="0.6" />
+            </linearGradient>
+          </defs>
+          <g transform={`translate(${ox} ${oy})`}>
+            <Pookalam />
+          </g>
+          <path d={`${land.far.line} V${h} H${land.far.start}Z`} fill="#0F7A52" />
+          <path className={fade} style={{ opacity: snowCover }} d={land.far.line} stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" fill="none" />
+          <path d={`${land.near.line} V${h} H${land.near.start}Z`} fill="#0B5D41" />
+          <path className={fade} style={{ opacity: snowCover }} d={land.near.line} stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" fill="none" />
+          {land.palms.map((p, i) => (
+            <Palm key={i} x={p.x} y={shore - 4} size={p.size} flip={p.flip} delay={-Math.round(jitter(i + 1) * 40) / 10} sway={sway} swayFor={swayFor} />
+          ))}
+          <rect y={shore} width={w} height={h - shore} fill={frozen ? "#D6E8EF" : "#124E5E"} style={{ transition: "fill 1s" }} />
+          {h - shore > 60 ? <rect y={shore + 40} width={w} height={h - shore - 40} fill="url(#deep-water)" /> : null}
           {!frozen ? (
             <g stroke="#8DBCD0" strokeWidth="1.4" strokeLinecap="round">
-              <path className="ripple" d="M30 410h18" />
-              <path className="ripple" style={{ animationDelay: "-1s" }} d="M140 420h24" />
-              <path className="ripple" style={{ animationDelay: "-2s" }} d="M250 412h16" />
-              <path className="ripple" style={{ animationDelay: "-0.5s" }} d="M90 430h20" />
-              <path className="ripple" style={{ animationDelay: "-1.6s" }} d="M300 428h22" />
+              {land.ripples.map((r, i) => (
+                <path key={i} className="ripple" style={{ animationDelay: `${r.delay}s` }} d={`M${r.x} ${r.y}h${r.len}`} />
+              ))}
             </g>
           ) : null}
           {/* A chundan vallam, the Kerala snake boat, rowing across. It stays home in storms and ice. */}
-          <g className={`boat-row ${fade}`} style={{ opacity: boatOut ? 1 : 0 }}>
-            <g className="boat-rock" style={{ "--bob": `${1 + windy / 8}px` } as CSSProperties}>
-              <path d="M0 412 Q70 420 140 410 Q150 400 156 384 Q152 400 146 412 Q70 426 0 414Z" fill="#3B2412" />
-              <path d="M6 413 Q70 420 138 411" stroke="#C9A227" strokeWidth="1.2" fill="none" />
-              <g fill="#FBF7EF">
-                {[[20, 408], [36, 409], [52, 410], [68, 410], [84, 410], [100, 409], [116, 408]].map(([cx, cy]) => (
-                  <circle key={cx} cx={cx} cy={cy} r="2.6" />
-                ))}
+          <g transform={`translate(0 ${oy})`}>
+            <g
+              className={`boat-row ${fade}`}
+              style={{ opacity: boatOut ? 1 : 0, "--row-to": `${w + 20}px`, animationDuration: `${(26 * (w + 190)) / 570}s` } as CSSProperties}
+            >
+              <g className="boat-rock" style={{ "--bob": `${1 + windy / 8}px` } as CSSProperties}>
+                <path d="M0 412 Q70 420 140 410 Q150 400 156 384 Q152 400 146 412 Q70 426 0 414Z" fill="#3B2412" />
+                <path d="M6 413 Q70 420 138 411" stroke="#C9A227" strokeWidth="1.2" fill="none" />
+                <g fill="#FBF7EF">
+                  {[[20, 408], [36, 409], [52, 410], [68, 410], [84, 410], [100, 409], [116, 408]].map(([cx, cy]) => (
+                    <circle key={cx} cx={cx} cy={cy} r="2.6" />
+                  ))}
+                </g>
+                <path d="M18 410l-6 10M34 411l-6 10M50 412l-6 10M66 412l-6 10M82 412l-6 10M98 411l-6 10M114 410l-6 10" stroke="#3B2412" strokeWidth="1.2" />
+                <path d="M150 388l6-8" stroke="#E39B2D" strokeWidth="2" />
               </g>
-              <path d="M18 410l-6 10M34 411l-6 10M50 412l-6 10M66 412l-6 10M82 412l-6 10M98 411l-6 10M114 410l-6 10" stroke="#3B2412" strokeWidth="1.2" />
-              <path d="M150 388l6-8" stroke="#E39B2D" strokeWidth="2" />
             </g>
           </g>
-          <g transform="translate(48 116)">
+          <g transform={`translate(${ox + 48} ${oy + 116})`}>
             <Branch />
             <path className={fade} style={{ opacity: snowCover ? 1 : 0 }} d="M2 124 Q90 104 170 117 T262 106" stroke="#FFFFFF" strokeWidth="4" fill="none" strokeLinecap="round" />
             <g className={fade} style={{ opacity: freezing && sky.rain > 0 ? 1 : 0 }} fill="#DDF3FF">
@@ -196,7 +290,7 @@ export function WeatherScene() {
             </g>
           </g>
         </svg>
-        <div className="pointer-events-none absolute inset-x-0 top-[266px] text-center">
+        <div className="pointer-events-none absolute text-center" style={{ left: ox, top: oy + 266, width: CORE_W }}>
           <p className="gold-foil font-display text-[46px] leading-none font-semibold">Mismo</p>
           <p className="mt-1.5 text-[13px] tracking-[0.14em] text-shamrock-100">WELCOME HOME</p>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { btnPrimary, btnSecondary, input } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 import { useSceneSky } from "./sky-context";
@@ -10,9 +10,9 @@ import { WeatherChip } from "./weather-chip";
 function errorMessage(code: string): string {
   const c = code.toLowerCase();
   if (c.includes("token") || c.includes("expired")) {
-    return "That sign-in link has expired or was already used. Ask for a new one below.";
+    return "That sign-in link has expired or was already used. Ask whoever invited you to send a new one.";
   }
-  return "That account isn't invited yet. Ask the owner to invite your email address.";
+  return "That account isn't invited. Ask the owner to invite your email address.";
 }
 
 // Passkeys need WebAuthn; the server assumes yes, the browser checks.
@@ -31,21 +31,12 @@ function FingerprintIcon() {
   );
 }
 
-function MailIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden>
-      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
-      <path d="m4 7 8 6 8-6" />
-    </svg>
-  );
-}
-
 /** The white card with a gold kasavu border, the weather at the house, and frost when it's freezing. */
 export function LoginCard({ children }: { children: ReactNode }) {
   const { sky, live } = useSceneSky();
   const frost = live && (sky.freezing || sky.tempF <= 32);
   return (
-    <div className="kasavu-card rounded-[1.4rem] bg-white p-1.5 shadow-lg shadow-brand-950/10">
+    <div className="kasavu-card rounded-[1.4rem] bg-white p-1.5 shadow-xl shadow-black/25">
       <div className={`kasavu-card-inner rounded-[1.05rem] p-5 ${frost ? "frosty" : "bg-white"}`}>
         <WeatherChip />
         {children}
@@ -54,111 +45,84 @@ export function LoginCard({ children }: { children: ReactNode }) {
   );
 }
 
-export function LoginForm({ google, error, devEmail }: { google: boolean; error?: string; devEmail: boolean }) {
+/**
+ * Passkeys only. Sign-in links come from an owner (with an invite, or from Settings),
+ * never from this page. The email field lets the browser offer saved passkeys.
+ */
+export function LoginForm({ google, error }: { google: boolean; error?: string }) {
   const router = useRouter();
   const passkeysWork = useSyncExternalStore(noop, browserHasPasskeys, () => true);
-  const [step, setStep] = useState<"start" | "email" | "sent">("start");
   const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sendFailed, setSendFailed] = useState(false);
-  const [passkeyBusy, setPasskeyBusy] = useState(false);
-  const [passkeyFailed, setPasskeyFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // Bumped after a failed try, to offer the saved passkeys in the email field again.
+  const [round, setRound] = useState(0);
 
-  async function signInWithPasskey() {
-    setPasskeyBusy(true);
-    setPasskeyFailed(false);
+  // Where the browser can, tapping the email field offers this device's passkeys for Mismo.
+  useEffect(() => {
+    if (!passkeysWork) return;
+    let active = true;
+    void (async () => {
+      const autofill = await window.PublicKeyCredential.isConditionalMediationAvailable?.().catch(() => false);
+      if (!autofill || !active) return;
+      // Starting the button's sign-in cancels this one; only a real sign-in counts.
+      const res = await authClient.signIn.passkey({ autoFill: true });
+      if (!active || !res || res.error) return;
+      router.replace("/");
+      router.refresh();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [passkeysWork, round, router]);
+
+  async function signIn(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setFailed(false);
     const res = await authClient.signIn.passkey();
     if (res?.error) {
-      setPasskeyBusy(false);
-      setPasskeyFailed(true);
+      setBusy(false);
+      setFailed(true);
+      setRound((n) => n + 1);
       return;
     }
     router.replace("/");
     router.refresh();
   }
 
-  async function sendLink(e: FormEvent) {
-    e.preventDefault();
-    setSending(true);
-    setSendFailed(false);
-    const res = await authClient.signIn.magicLink({ email, callbackURL: "/", errorCallbackURL: "/login" });
-    setSending(false);
-    if (res.error) setSendFailed(true);
-    else setStep("sent");
-  }
-
-  if (step === "sent") {
-    return (
-      <LoginCard>
-        <p className="font-display text-lg font-semibold text-brand-800">Check your email</p>
-        <p className="mt-1 text-sm text-sand-600">If {email} is invited, a sign-in link is on its way. It works once and lasts 1 hour.</p>
-        <p className="mt-3 rounded-lg bg-shamrock-50 p-2.5 text-xs text-shamrock-900">
-          Once you&apos;re in, add a passkey in Settings. Next time on this device, signing in is one tap.
-        </p>
-        {devEmail ? (
-          <p className="mt-3 rounded-lg bg-saffron-50 p-2 text-xs text-saffron-900">
-            Email isn&apos;t set up on this server, so the link is printed in the server&apos;s console instead.
-          </p>
-        ) : null}
-        <button type="button" className={`${btnSecondary} mt-4 w-full`} onClick={() => setStep("email")}>
-          Use a different email
-        </button>
-      </LoginCard>
-    );
-  }
-
-  const showEmail = step === "email" || !passkeysWork;
-
   return (
     <div className="space-y-4">
-      {error ? <p className="rounded-lg bg-sindoor-50 p-3 text-sm text-sindoor-800">{errorMessage(error)}</p> : null}
+      {error ? <p className="rounded-lg bg-sindoor-50 p-3 text-sm text-sindoor-800 shadow-sm">{errorMessage(error)}</p> : null}
       <LoginCard>
         {passkeysWork ? (
-          <>
-            <button type="button" className={`${btnPrimary} glint min-h-12 w-full text-base sm:min-h-12`} onClick={signInWithPasskey} disabled={passkeyBusy}>
-              <FingerprintIcon />
-              {passkeyBusy ? "Waiting for your device…" : "Sign in with passkey"}
-            </button>
-            <p className="mt-2 text-center text-xs text-sand-500">Face ID, fingerprint or Windows Hello</p>
-            {passkeyFailed ? (
-              <p className="mt-3 rounded-lg bg-saffron-50 p-2.5 text-sm text-saffron-900">
-                That didn&apos;t sign you in. If this device doesn&apos;t have a passkey for Mismo yet, get an email link below, then add one in Settings.
-              </p>
-            ) : null}
-            <div className="my-4 flex items-center gap-3 text-xs text-sand-400">
-              <span className="h-px flex-1 bg-sand-200" />
-              new device?
-              <span className="h-px flex-1 bg-sand-200" />
-            </div>
-          </>
-        ) : null}
-
-        {showEmail ? (
-          <form onSubmit={sendLink} className="space-y-3">
+          <form onSubmit={signIn} noValidate>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-sand-700">Your email</span>
+              <span className="mb-1 block text-sm font-medium text-sand-700">Email</span>
               <input
                 className={input}
                 type="email"
-                required
-                autoFocus={step === "email"}
-                autoComplete="email"
+                name="email"
+                autoComplete="username webauthn"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
               />
             </label>
-            <button type="submit" className={`${passkeysWork ? btnSecondary : btnPrimary} w-full`} disabled={sending}>
-              <MailIcon />
-              {sending ? "Sending…" : "Email me a sign-in link"}
+            <button type="submit" className={`${btnPrimary} glint mt-3 min-h-12 w-full text-base sm:min-h-12`} disabled={busy}>
+              <FingerprintIcon />
+              {busy ? "Waiting for your device…" : "Sign in with passkey"}
             </button>
-            {sendFailed ? <p className="text-sm text-sindoor-700">Something went wrong. Try again in a minute.</p> : null}
+            <p className="mt-2 text-center text-xs text-sand-500">Face ID, fingerprint or Windows Hello</p>
+            {failed ? (
+              <p className="mt-3 rounded-lg bg-saffron-50 p-2.5 text-sm text-saffron-900">
+                That didn&apos;t sign you in. On a new computer, tap the button again, choose the option to use a phone, and scan the code with the phone that has
+                your passkey. New here? Use the link in your invite email.
+              </p>
+            ) : null}
           </form>
         ) : (
-          <button type="button" className={`${btnSecondary} w-full`} onClick={() => setStep("email")}>
-            <MailIcon />
-            Email me a sign-in link
-          </button>
+          <p className="text-sm text-sand-700">This browser can&apos;t use passkeys. Open Mismo in an up-to-date Safari, Chrome or Edge.</p>
         )}
       </LoginCard>
       {google ? (

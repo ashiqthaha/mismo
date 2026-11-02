@@ -37,6 +37,16 @@ curl -sI http://127.0.0.1:3400/login | head -1
 
 The build briefly uses 1–2 GB of memory and both CPUs; run it when nothing busy is happening on the server.
 
+### First sign-in
+
+The sign-in page only takes passkeys; nobody can ask it for an email link. For the owner's first sign-in, make a one-time link on the server (it lasts 1 hour):
+
+```bash
+deploy/signin-link.sh <OWNER_EMAIL>
+```
+
+Open it, tap **Sign in**, and add a passkey when asked. From then on, owners invite people from Settings (the invite email carries a one-time link) and can send anyone in the household a new link there. Use the script again only if nobody can sign in.
+
 ## 3. Publish through Cloudflare
 
 In the Cloudflare dashboard: Zero Trust → Networks → Tunnels → the server's tunnel → Public hostname → Add:

@@ -10,7 +10,8 @@ export function ConfirmButton({ token }: { token: string }) {
     setGoing(true);
     // A full page load, not a client navigation: the sign-in API sets the cookie and redirects.
     const url = new URL("/api/auth/magic-link/verify", window.location.origin);
-    url.search = new URLSearchParams({ token, callbackURL: "/", errorCallbackURL: "/login" }).toString();
+    // Then straight on to adding a passkey, so this device won't need a link again.
+    url.search = new URLSearchParams({ token, callbackURL: "/welcome", errorCallbackURL: "/login" }).toString();
     window.location.assign(url.href);
   }
   return (

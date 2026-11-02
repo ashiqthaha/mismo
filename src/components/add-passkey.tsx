@@ -16,8 +16,8 @@ function deviceName(): string {
   return "This device";
 }
 
-/** Saves a passkey for the signed-in person on this phone or computer. */
-export function AddPasskey({ first }: { first: boolean }) {
+/** Saves a passkey for the signed-in person on this phone or computer, then goes to `then` if given. */
+export function AddPasskey({ first, then }: { first: boolean; then?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -32,7 +32,8 @@ export function AddPasskey({ first }: { first: boolean }) {
       return;
     }
     setNote("Passkey saved. Next time, tap Sign in with passkey.");
-    router.refresh();
+    if (then) router.push(then);
+    else router.refresh();
   }
 
   return (

@@ -33,8 +33,24 @@ export function googleEnabled(): boolean {
   return googleConfigured;
 }
 
+/** Who a sign-in link is from, and whether it comes with an invite. Passed through Better Auth to sendMagicLink. */
+type LinkFrom = { name: string; email: string; invite: boolean };
+
+const LINK_DAYS = 7;
+
+/**
+ * Emails a one-time sign-in link: with an invite, or when an owner sends one from Settings
+ * for a new phone or computer. The sign-in page can't ask for one; this is the only way.
+ */
+export async function sendSignInLink(email: string, from: LinkFrom): Promise<void> {
+  await auth.api.signInMagicLink({ body: { email, callbackURL: "/welcome", metadata: from }, headers: new Headers() });
+}
+
 export const auth = betterAuth({
   appName: "Mismo",
+  // Nobody can ask for a sign-in link from the outside; owners send them (sendSignInLink).
+  // Local development keeps it, so a link can be requested with curl and read from the console.
+  disabledPaths: process.env.NODE_ENV === "development" ? [] : ["/sign-in/magic-link"],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: { user, session, account, verification, passkey },
@@ -63,23 +79,42 @@ export const auth = betterAuth({
     : {},
   plugins: [
     magicLink({
-      expiresIn: 60 * 60,
-      sendMagicLink: async ({ email, token }) => {
-        // Not invited: send nothing, and say nothing different to the person asking.
+      // Long enough for an invite to wait in an inbox for a few days. Each link still works only once.
+      expiresIn: LINK_DAYS * 24 * 60 * 60,
+      sendMagicLink: async ({ email, token, metadata }) => {
         if (!(await allowedRole(email))) return;
+        const from = metadata as LinkFrom | undefined;
+        const name = from?.name || "Someone";
         // The email points at a page with a Sign in button, not at the link itself, so mail
         // scanners and link previews that open it can't use it up.
         const url = new URL("/login/confirm", baseURL);
         url.searchParams.set("token", token);
+        const lasts = `It works once and lasts ${LINK_DAYS} days.`;
+        const passkeyTip = "Once you're in, add a passkey and next time it's one tap with Face ID, your fingerprint or Windows Hello.";
+        if (from?.invite) {
+          await sendEmail({
+            to: email,
+            subject: `${name} invited you to Mismo`,
+            text: `${name} invited you to Mismo, where we keep track of repairs, projects and upkeep for the house. Open this link to join. ${lasts}\n\n${url}\n\n${passkeyTip}`,
+            html: emailHtml(
+              "You're invited to Mismo",
+              `${name} invited you to Mismo, where we keep track of repairs, projects and upkeep for the house. Tap the button to join. ${lasts} ${passkeyTip}`,
+              { label: "Join Mismo", url: url.toString() },
+            ),
+            replyTo: from.email,
+          });
+          return;
+        }
         await sendEmail({
           to: email,
           subject: "Your Mismo sign-in link",
-          text: `Open this link to sign in to Mismo. It works once and expires in 1 hour.\n\n${url}`,
+          text: `${name} sent you a link to sign in to Mismo on a new phone or computer. ${lasts}\n\n${url}\n\n${passkeyTip}`,
           html: emailHtml(
             "Sign in to Mismo",
-            "Tap the button to sign in. The link works once and expires in 1 hour.",
+            `${name} sent you a link to sign in to Mismo on a new phone or computer. Open it on that device and tap the button. ${lasts} ${passkeyTip}`,
             { label: "Sign in", url: url.toString() },
           ),
+          replyTo: from?.email,
         });
       },
     }),

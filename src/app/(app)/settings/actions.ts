@@ -3,9 +3,9 @@
 import { and, eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { audit } from "@/lib/audit";
+import { sendSignInLink } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invite, notificationPref, passkey, user, type Bird, type Role } from "@/lib/db/schema";
-import { emailHtml, sendEmail } from "@/lib/email";
 import { str } from "@/lib/format";
 import { EVENTS } from "@/lib/notify";
 import { requireOwner, requireUser } from "@/lib/session";
@@ -59,19 +59,26 @@ export async function invitePerson(formData: FormData) {
     .values({ email, role, invitedBy: me.id })
     .onConflictDoUpdate({ target: invite.email, set: { role, invitedBy: me.id } });
   await audit(me.id, "create", "invite", email, { role });
-  const url = new URL("/login", process.env.BETTER_AUTH_URL || "http://localhost:3000").toString();
-  await sendEmail({
-    to: email,
-    subject: `${me.name || "Someone"} invited you to Mismo`,
-    text: `You're invited to Mismo, where we track the work on the house. Sign in with this email address:\n\n${url}`,
-    html: emailHtml(
-      "You're invited to Mismo",
-      `${me.name || "Someone"} invited you to Mismo, where we keep track of repairs, projects and upkeep for the house. Sign in with this email address.`,
-      { label: "Open Mismo", url },
-    ),
-    replyTo: me.email,
-  });
+  await sendSignInLink(email, { name: me.name, email: me.email, invite: true });
   refresh();
+}
+
+/** Emails a waiting invite again, with a fresh link. */
+export async function resendInvite(inviteId: string) {
+  const me = await requireOwner();
+  const [inv] = await db.select({ email: invite.email }).from(invite).where(eq(invite.id, inviteId));
+  if (!inv) return;
+  await sendSignInLink(inv.email, { name: me.name, email: me.email, invite: true });
+  await audit(me.id, "create", "sign_in_link", inviteId, { invite: true });
+}
+
+/** Emails someone in the household a one-time sign-in link, for a new phone or computer. */
+export async function sendLinkTo(userId: string) {
+  const me = await requireOwner();
+  const [u] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId));
+  if (!u) return;
+  await sendSignInLink(u.email, { name: me.name, email: me.email, invite: false });
+  await audit(me.id, "create", "sign_in_link", userId);
 }
 
 export async function revokeInvite(inviteId: string) {

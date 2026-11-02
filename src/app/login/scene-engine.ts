@@ -5,6 +5,8 @@ import type { Season } from "@/lib/sky";
 // front one (rain, snow, hail, leaves, fireflies, fog, haze, frost) sits in front.
 // Every input is a plain number, so any mix of weather draws itself, and numbers
 // ease toward new readings so a change of weather drifts in rather than jumps.
+// The scene fills the screen: the birds and pookalam are a 360×440 core placed at
+// (ox, oy), and the sky, hills, water and weather carry on around it.
 
 export type SceneInputs = {
   hour: number;
@@ -25,9 +27,12 @@ export type SceneInputs = {
   season: Season;
 };
 
+/** The scene's size in drawing units, where the core sits, its on-screen scale, and how much the card leaves open. */
+export type SceneLayout = { w: number; h: number; ox: number; oy: number; scale: number; open: number };
+
+export const CORE_LAYOUT: SceneLayout = { w: 360, h: 440, ox: 0, oy: 0, scale: 1, open: 360 };
+
 type RGB = [number, number, number];
-const W = 360;
-const H = 440;
 const EASED = ["cloud", "rain", "snow", "wind", "tempF", "fog", "aqi"] as const;
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -67,15 +72,36 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
   let flash = 0;
   let bolt: { pts: [number, number][]; until: number } | null = null;
   let nextBolt = 0;
+  let L = CORE_LAYOUT;
+  // How many 360×440 scenes fit on screen, and how many side by side: more screen, more rain.
+  let area = 1;
+  let across = 1;
 
-  const stars = Array.from({ length: 70 }, () => ({ x: rand(4, 356), y: rand(4, 240), r: rand(0.5, 1.6), p: rand(0, 6) }));
-  const clouds = Array.from({ length: 11 }, () => ({ x: rand(-60, 380), y: rand(10, 190), s: rand(0.7, 1.5), v: rand(0.6, 1.4) }));
-  const drops = Array.from({ length: 460 }, () => ({ x: rand(-40, 400), y: rand(-440, 440), v: rand(9, 14), l: rand(0.8, 1.2) }));
-  const flakes = Array.from({ length: 400 }, () => ({ x: rand(0, 360), y: rand(-440, 440), r: rand(1, 3.2), p: rand(0, 6) }));
-  const stones = Array.from({ length: 70 }, () => ({ x: rand(0, 360), y: rand(-440, 0), vy: rand(6, 9), bounced: false }));
-  const leaves = Array.from({ length: 22 }, () => ({ x: rand(0, 380), y: rand(-440, 440), a: rand(0, 6), v: rand(0.5, 1.1), p: rand(0, 6) }));
-  const flies = Array.from({ length: 24 }, () => ({ x: rand(20, 340), y: rand(250, 395), p: rand(0, 6), q: rand(0, 6) }));
+  const many = <T>(n: number, make: () => T) => Array.from({ length: Math.ceil(n) }, make);
+  let stars: { x: number; y: number; r: number; p: number }[] = [];
+  let clouds: { x: number; y: number; s: number; v: number }[] = [];
+  let drops: { x: number; y: number; v: number; l: number }[] = [];
+  let flakes: { x: number; y: number; r: number; p: number }[] = [];
+  let stones: { x: number; y: number; vy: number; floor: number; bounced: boolean }[] = [];
+  let leaves: { x: number; y: number; a: number; v: number; p: number }[] = [];
+  let flies: { x: number; y: number; p: number; q: number }[] = [];
   const ripples: { x: number; y: number; r: number; a: number }[] = [];
+
+  /** Scatter everything over the scene at its current size. */
+  function populate() {
+    const { w, h, oy } = L;
+    area = (w * h) / (360 * 440);
+    across = w / 360;
+    stars = many(70 * across, () => ({ x: rand(4, w - 4), y: rand(4, oy + 240), r: rand(0.5, 1.6), p: rand(0, 6) }));
+    clouds = many(11 * across, () => ({ x: rand(-60, w + 20), y: rand(Math.max(10, oy - 40), oy + 190), s: rand(0.7, 1.5), v: rand(0.6, 1.4) }));
+    drops = many(460 * area, () => ({ x: rand(-40, w + 40), y: rand(-h, h), v: rand(9, 14), l: rand(0.8, 1.2) }));
+    flakes = many(400 * area, () => ({ x: rand(0, w), y: rand(-h, h), r: rand(1, 3.2), p: rand(0, 6) }));
+    stones = many(70 * area, () => ({ x: rand(0, w), y: rand(-h, 0), vy: rand(6, 9), floor: rand(oy + 398, Math.max(oy + 400, h - 6)), bounced: false }));
+    leaves = many(22 * area, () => ({ x: rand(0, w + 20), y: rand(-h, h), a: rand(0, 6), v: rand(0.5, 1.1), p: rand(0, 6) }));
+    flies = many(24 * across, () => ({ x: rand(20, w - 20), y: rand(oy + 250, oy + 395), p: rand(0, 6), q: rand(0, 6) }));
+    ripples.length = 0;
+  }
+  populate();
 
   function paintSky(p: SceneInputs, h: number) {
     const day = clamp(h * 4 + 0.15, 0, 1);
@@ -106,7 +132,8 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
       b = mix(b, [215, 222, 218], (p.snow / 5) * 0.35 * day);
     }
     top = t;
-    const css = `linear-gradient(to bottom, ${rgba(t)}, ${rgba(b)} 75%)`;
+    // The warm glow sits on the horizon, just above the hills.
+    const css = `linear-gradient(to bottom, ${rgba(t)}, ${rgba(b)} ${Math.round((L.oy + 330) * L.scale)}px)`;
     if (css !== lastSky) {
       skyEl.style.background = css;
       lastSky = css;
@@ -150,6 +177,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     else for (const k of EASED) cur[k] = target[k];
     const p = { ...target, ...Object.fromEntries(EASED.map((k) => [k, cur![k]])) } as SceneInputs;
     const T = ms / 1000;
+    const { w: W, h: H, ox, oy, open } = L;
     const h = sunHeight(p);
     const s = paintSky(p, h);
     const night = 1 - s.day;
@@ -169,8 +197,8 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
         bk.fill();
       }
     }
-    const x = 40 + 280 * arcPosition(p);
-    const y = 230 - 190 * Math.abs(h);
+    const x = 40 + (open - 80) * arcPosition(p);
+    const y = oy + 230 - 190 * Math.abs(h);
     if (h > -0.05) {
       const alpha = clamp((1 - s.cl * 0.9) * (1 - s.fog * 0.7), 0, 1) * clamp(h * 10 + 0.5, 0, 1);
       const colour: RGB = p.aqi > 150 ? [226, 96, 58] : mix([246, 215, 122], [240, 140, 60], s.dusk);
@@ -209,7 +237,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
       for (const [r, c] of bands) {
         bk.strokeStyle = rgba(c, 0.45 * (1 - s.fog));
         bk.beginPath();
-        bk.arc(180, 420, r, Math.PI, 0);
+        bk.arc(ox + 180, oy + 420, r, Math.PI, 0);
         bk.stroke();
       }
     }
@@ -220,7 +248,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     for (let i = 0; i < Math.round(s.cl * clouds.length); i++) {
       const c = clouds[i];
       c.x += (0.04 + wind * 0.018) * c.v * step;
-      if (c.x > 420) c.x = -80;
+      if (c.x > W + 60) c.x = -80;
       drawCloud(c.x, c.y, c.s, cloudColour);
     }
 
@@ -228,8 +256,8 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     if (p.thunder && move && T > nextBolt) {
       nextBolt = T + rand(4, 9);
       flash = 0.4;
-      const pts: [number, number][] = [[rand(40, 320), 60]];
-      while (pts[pts.length - 1][1] < 330) {
+      const pts: [number, number][] = [[rand(40, open - 40), oy + 60]];
+      while (pts[pts.length - 1][1] < oy + 330) {
         const [lx, ly] = pts[pts.length - 1];
         pts.push([lx + rand(-22, 22), ly + rand(18, 34)]);
       }
@@ -248,7 +276,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
 
     // Rain: drizzle is short, faint and slow; heavy rain is long and dense. Wind slants it.
     if (p.rain > 0) {
-      const count = Math.min(drops.length, Math.floor(30 + p.rain * 42));
+      const count = Math.min(drops.length, Math.floor((30 + p.rain * 42) * area));
       const drizzle = p.rain < 0.5;
       const len = drizzle ? 6 : 10 + p.rain * 1.4;
       fr.strokeStyle = freezing ? "rgba(222,243,255,.75)" : drizzle ? "rgba(207,227,236,.35)" : "rgba(207,227,236,.6)";
@@ -260,9 +288,9 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
         d.y += v * step;
         d.x += wx * 2 * step;
         if (d.y > H) {
-          if (!frozenWater && Math.random() < 0.25) ripples.push({ x: d.x, y: rand(400, 436), r: 1, a: 0.6 });
+          if (!frozenWater && Math.random() < 0.25) ripples.push({ x: d.x, y: rand(oy + 400, H - 4), r: 1, a: 0.6 });
           d.y = rand(-60, 0);
-          d.x = rand(-60, 400);
+          d.x = rand(-60, W + 40);
         }
         fr.moveTo(d.x, d.y);
         fr.lineTo(d.x - (wx * 2 * len) / v, d.y - len * d.l);
@@ -285,7 +313,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     }
 
     if (p.snow > 0) {
-      const count = Math.min(flakes.length, Math.floor(25 + p.snow * 72));
+      const count = Math.min(flakes.length, Math.floor((25 + p.snow * 72) * area));
       fr.fillStyle = "rgba(255,255,255,.92)";
       for (let i = 0; i < count; i++) {
         const f = flakes[i];
@@ -293,9 +321,9 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
         f.x += (Math.sin(T * 1.3 + f.p) * 0.4 + wx * 1.6) * step;
         if (f.y > H) {
           f.y = rand(-30, 0);
-          f.x = rand(-40, 380);
+          f.x = rand(-40, W + 20);
         }
-        if (f.x > 370) f.x = -10;
+        if (f.x > W + 10) f.x = -10;
         fr.beginPath();
         fr.arc(f.x, f.y, f.r, 0, Math.PI * 2);
         fr.fill();
@@ -307,13 +335,13 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
       for (const st of stones) {
         st.y += st.vy * step;
         st.x += wx * step;
-        if (st.y > 398 && !st.bounced) {
+        if (st.y > st.floor && !st.bounced) {
           st.vy = -st.vy * 0.35;
           st.bounced = true;
         }
         if (st.bounced) st.vy += 0.5 * step;
-        if (st.y > H || (st.bounced && st.vy > 0 && st.y > 400)) {
-          Object.assign(st, { y: rand(-80, 0), x: rand(0, 360), vy: rand(6, 9), bounced: false });
+        if (st.y > H || (st.bounced && st.vy > 0 && st.y > st.floor + 2)) {
+          Object.assign(st, { y: rand(-80, 0), x: rand(0, W), vy: rand(6, 9), bounced: false });
         }
         fr.beginPath();
         fr.arc(st.x, st.y, 2.4, 0, Math.PI * 2);
@@ -324,15 +352,15 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     // Autumn leaves or spring blossoms, blown about by the wind.
     if ((p.season === "autumn" || p.season === "spring") && p.snow === 0 && p.rain < 3) {
       const colours = p.season === "autumn" ? ["#E39B2D", "#A8322D", "#C9A227", "#C77F1A"] : ["#F4C0D1", "#FBEAF0", "#ED93B1", "#FFFFFF"];
-      const count = Math.min(leaves.length, 6 + Math.round(wind / 3));
+      const count = Math.min(leaves.length, Math.round((6 + wind / 3) * area));
       for (let i = 0; i < count; i++) {
         const l = leaves[i];
         l.y += l.v * step;
         l.x += (Math.sin(T + l.p) * 0.6 + wx * 2.2 - 0.2) * step;
         l.a += (0.03 + wind * 0.002) * step;
-        if (l.y > H || l.x > 400 || l.x < -40) {
+        if (l.y > H || l.x > W + 40 || l.x < -40) {
           l.y = rand(-40, -5);
-          l.x = wind > 15 ? rand(-120, 200) : rand(0, 380);
+          l.x = wind > 15 ? rand(-120, W * 0.55) : rand(0, W + 20);
         }
         fr.save();
         fr.translate(l.x, l.y);
@@ -366,7 +394,7 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
       for (let band = 0; band < 5; band++) {
         fr.beginPath();
         for (let hx = 0; hx <= W; hx += 8) {
-          const hy = 322 + band * 11 + Math.sin(hx * 0.05 + T * 3 + band) * 2.2;
+          const hy = oy + 322 + band * 11 + Math.sin(hx * 0.05 + T * 3 + band) * 2.2;
           if (hx) fr.lineTo(hx, hy);
           else fr.moveTo(hx, hy);
         }
@@ -378,14 +406,14 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
     if (p.fog > 0) {
       const fogColour = night > 0.5 ? "150,165,160" : "236,240,238";
       for (let band = 0; band < 6; band++) {
-        const fy = 170 + band * 42;
-        const fx = ((T * (4 + wind * 0.6) * (1 + band * 0.15)) % 560) - 200;
+        const fy = oy + 170 + band * 42;
+        const fx = ((T * (4 + wind * 0.6) * (1 + band * 0.15)) % (W + 200)) - 200;
         const g = fr.createLinearGradient(0, fy - 22, 0, fy + 22);
         g.addColorStop(0, `rgba(${fogColour},0)`);
         g.addColorStop(0.5, `rgba(${fogColour},${s.fog * 0.42})`);
         g.addColorStop(1, `rgba(${fogColour},0)`);
         fr.fillStyle = g;
-        fr.fillRect(fx - 200, fy - 22, 760, 44);
+        fr.fillRect(fx - 200, fy - 22, W + 400, 44);
       }
       fr.fillStyle = `rgba(${fogColour},${s.fog * 0.22})`;
       fr.fillRect(0, 0, W, H);
@@ -419,13 +447,17 @@ export function createScene(back: HTMLCanvasElement, front: HTMLCanvasElement, s
   }
 
   return {
-    /** Size the canvases for the scene's on-screen scale, kept sharp on high-density screens. */
-    resize(scale: number) {
+    /** Size the canvases for the screen, kept sharp on high-density screens. */
+    resize(next: SceneLayout) {
+      const moved = Math.abs(next.w - L.w) > 1 || Math.abs(next.h - L.h) > 1 || Math.abs(next.oy - L.oy) > 1;
+      L = next;
+      if (moved) populate();
+      lastSky = "";
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       for (const [canvas, ctx] of [[back, bk], [front, fr]] as const) {
-        canvas.width = Math.round(W * scale * dpr);
-        canvas.height = Math.round(H * scale * dpr);
-        ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+        canvas.width = Math.round(L.w * L.scale * dpr);
+        canvas.height = Math.round(L.h * L.scale * dpr);
+        ctx.setTransform(L.scale * dpr, 0, 0, L.scale * dpr, 0, 0);
       }
       if (still) draw(performance.now(), false);
     },

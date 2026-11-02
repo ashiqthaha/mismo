@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { AddPasskey } from "@/components/add-passkey";
 import { BIRDS, BirdBadge, BirdPicture } from "@/components/birds";
 import { PushToggle } from "@/components/push-toggle";
+import { SendLinkButton } from "@/components/send-link-button";
 import { SignOutButton } from "@/components/sign-out";
 import { PageSkeleton } from "@/components/skeleton";
 import { SubmitButton } from "@/components/submit-button";
@@ -16,7 +17,7 @@ import { EVENTS } from "@/lib/notify";
 import { displayName } from "@/lib/people";
 import { vapidPublicKey } from "@/lib/push";
 import { requireUser } from "@/lib/session";
-import { invitePerson, removeMyPasskey, removePerson, revokeInvite, savePrefs, updateMyBird, updateMyName } from "./actions";
+import { invitePerson, removeMyPasskey, removePerson, resendInvite, revokeInvite, savePrefs, sendLinkTo, updateMyBird, updateMyName } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -78,7 +79,8 @@ async function SettingsPage() {
       <Card>
         <CardTitle>Passkeys</CardTitle>
         <p className="mb-3 text-sm text-sand-600">
-          Sign in with Face ID, your fingerprint or Windows Hello instead of waiting for an email. Add one on each phone and computer you use.
+          Passkeys are how you sign in: Face ID, your fingerprint or Windows Hello. Add one on each phone and computer you use. On a computer without one, you
+          can sign in with your phone&apos;s passkey by scanning the code the browser shows.
         </p>
         {passkeys.length ? (
           <ul className="mb-3 divide-y divide-sand-100">
@@ -152,6 +154,7 @@ async function SettingsPage() {
               </span>
               <span className="flex shrink-0 items-center gap-2">
                 <Badge>{p.role === "owner" ? "Owner" : "Family"}</Badge>
+                {me.role === "owner" ? <SendLinkButton send={sendLinkTo.bind(null, p.id)} label="Send link" /> : null}
                 {me.role === "owner" && p.id !== me.id ? (
                   <form action={removePerson.bind(null, p.id)}>
                     <button type="submit" className="text-xs text-sindoor-700 hover:underline">Remove</button>
@@ -165,6 +168,7 @@ async function SettingsPage() {
               <span className="text-sand-600">{i.email}</span>
               <span className="flex shrink-0 items-center gap-2">
                 <Badge tone="bg-saffron-50 text-saffron-900 ring-saffron-200">Invited</Badge>
+                {me.role === "owner" ? <SendLinkButton send={resendInvite.bind(null, i.id)} label="Send again" /> : null}
                 {me.role === "owner" ? (
                   <form action={revokeInvite.bind(null, i.id)}>
                     <button type="submit" className="text-xs text-sindoor-700 hover:underline">Cancel</button>
@@ -186,7 +190,10 @@ async function SettingsPage() {
             <div className="self-end"><SubmitButton className={btnSecondary} pendingText="Sending…">Send invite</SubmitButton></div>
           </form>
         ) : null}
-        <p className="mt-3 text-xs text-sand-500">Family members can do everything except invite or remove people.</p>
+        <p className="mt-3 text-xs text-sand-500">
+          Family members can do everything except invite or remove people. The invite email has a one-time link to join. Send link emails someone a new one-time
+          link, for a new phone or computer.
+        </p>
       </Card>
     </div>
   );

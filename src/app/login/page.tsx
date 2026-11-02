@@ -22,10 +22,6 @@ async function LoginBox({ searchParams }: Pick<PageProps<"/login">, "searchParam
   await connection();
   const { error } = await searchParams;
   return (
-    <LoginForm
-      google={googleEnabled()}
-      error={typeof error === "string" ? error : Array.isArray(error) ? error.at(-1) : undefined}
-      devEmail={!process.env.RESEND_API_KEY}
-    />
+    <LoginForm google={googleEnabled()} error={typeof error === "string" ? error : Array.isArray(error) ? error.at(-1) : undefined} />
   );
 }
