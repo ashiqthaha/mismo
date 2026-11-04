@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces } from "next/font/google";
+import { Suspense } from "react";
+import { Analytics } from "@/components/analytics";
 import "./globals.css";
 
 // Headings only. next/font downloads it at build time and serves it from our own server.
@@ -21,7 +23,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`h-full antialiased ${fraunces.variable}`}>
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        {children}
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+      </body>
     </html>
   );
 }
